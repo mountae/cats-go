@@ -28,8 +28,8 @@ definitions:
 host: localhost:8000
 info:
   contact: {}
-  description: This simple application is written for teaching Go.
-  title: Cats CRUD
+  description: This is a simple CRUD app for Go.
+  title: Cats Go
   version: "1.0"
 paths:
   /cats:

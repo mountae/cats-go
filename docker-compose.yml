@@ -6,6 +6,7 @@ services:
       - db
       - mongo
     build: ./
+    command: ./cats-go-docker
     ports:
       - "8000:8000"
     networks:

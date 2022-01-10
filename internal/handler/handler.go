@@ -96,7 +96,7 @@ func (h *CatHandler) GetCat(c echo.Context) error {
 // @Router /cats/{id} [put]
 func (h *CatHandler) UpdateCat(c echo.Context) error {
 	cats := new(models.Cats)
-	if err := c.Bind(cats); err != err {
+	if err := c.Bind(cats); err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.Cats))
 	}
 	if err := c.Validate(cats); err != nil {

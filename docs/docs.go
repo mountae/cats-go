@@ -407,8 +407,8 @@ var SwaggerInfo = swaggerInfo{
 	Host:        "localhost:8000",
 	BasePath:    "/",
 	Schemes:     []string{},
-	Title:       "Cats CRUD",
-	Description: "This simple application is written for teaching Go.",
+	Title:       "Cats Go",
+	Description: "This is a simple CRUD app for Go.",
 }
 
 type s struct{}

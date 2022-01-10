@@ -60,8 +60,7 @@ func main() {
 		rpsAuth = repository2.NewMongoRepository(client)
 	}
 
-	var srv service.Service
-	srv = service.NewCatService(rps)
+	var srv service.Service = service.NewCatService(rps)
 	hndlr := handler.NewCatHandler(srv)
 	e.GET("/cats", hndlr.GetAllCats)
 	e.POST("/cats", hndlr.CreateCats)
@@ -69,8 +68,7 @@ func main() {
 	e.PUT("/cats/:id", hndlr.UpdateCat)
 	e.DELETE("/cats/:id", hndlr.DeleteCat)
 
-	var srvAuth service.Auth
-	srvAuth = service.NewUserAuthService(rpsAuth)
+	var srvAuth service.Auth = service.NewUserAuthService(rpsAuth)
 	hndlrAuth := handler.NewUserAuthHandler(srvAuth)
 	e.POST("/register", hndlrAuth.SignUp)
 	e.POST("/login", hndlrAuth.SignIn)

@@ -7,6 +7,6 @@ COPY . /usr/src/app/
 
 RUN go mod download
 
-RUN go build -o /cats-go-docker
+RUN go build -o cats-go-docker ./main.go
 
-CMD ["/cats-go-docker"]
+CMD ["./cats-go-docker"]

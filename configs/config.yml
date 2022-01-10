@@ -4,7 +4,7 @@ port: ":8000"
 db:
   pos: "postgres"
   username: "user"
-  host: "localhost"
+  host: "postgres" #localhost/postgres
   port: "5432"
   dbase: "postgres"
 

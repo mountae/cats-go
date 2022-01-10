@@ -29,7 +29,7 @@ func RequestMongo() (*mongo.Client, context.CancelFunc) {
 	url := os.Getenv("MONGODB_CONNSTRING")
 
 	// comment out url when building
-	url = "mongodb://root:example@localhost:27017/"
+	//url = "mongodb://root:example@localhost:27017/"
 
 	client, err := mongo.NewClient(options.Client().ApplyURI(url))
 	if err != nil {
