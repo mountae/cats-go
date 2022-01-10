@@ -1,0 +1,17 @@
+port: ":8000"
+
+
+db:
+  pos: "postgres"
+  username: "user"
+  host: "localhost"
+  port: "5432"
+  dbase: "postgres"
+
+
+mongodb:
+  username: "root"
+  port: "27017"
+  dbase: "mongodb"
+  collection: "mongocl"
+
