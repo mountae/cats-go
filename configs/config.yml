@@ -1,10 +1,10 @@
 port: ":8000"
-
+"KEY_FOR_SIGNATURE_JWT": "jwt_key"
 
 db:
   pos: "postgres"
   username: "user"
-  host: "postgres" #localhost/postgres
+  host: "localhost" #localhost/postgres
   port: "5432"
   dbase: "postgres"
 

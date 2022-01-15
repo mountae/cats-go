@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
+
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
 )
@@ -28,6 +29,7 @@ func RequestDB() *pgxpool.Pool {
 		viper.GetString("db.port"),
 		viper.GetString("db.dbase"))
 
+	fmt.Println(url)
 	conn, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)

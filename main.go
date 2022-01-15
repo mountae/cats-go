@@ -62,6 +62,7 @@ func main() {
 
 	var srv service.Service = service.NewCatService(rps)
 	hndlr := handler.NewCatHandler(srv)
+
 	e.GET("/cats", hndlr.GetAllCats)
 	e.POST("/cats", hndlr.CreateCats)
 	e.GET("/cats/:id", hndlr.GetCat)

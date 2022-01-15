@@ -18,7 +18,7 @@ type UserAuthService struct {
 
 type Auth interface {
 	CreateUserServ(user models.User) (int, error)
-	GenerateToken(username string, password string) (t string, err error)
+	GenerateToken(username string, password string) (t string, rt string, err error)
 }
 
 func NewUserAuthService(r repository.Auth) *UserAuthService {
@@ -36,29 +36,43 @@ func (s *UserAuthService) CreateUserServ(user models.User) (int, error) {
 	return s.repository.CreateUser(user)
 }
 
-func (s *UserAuthService) GenerateToken(username string, password string) (t string, err error) {
+func (s *UserAuthService) GenerateToken(username string, password string) (t string, rt string, err error) {
 	user, err := s.repository.GetUser(username, generatePassword(password))
 	if err != nil {
-		return "", errors.New("error with generate token in repository")
+		return "", "", errors.New("error with generate token in repository")
 	}
 
-	claims := &JwtCustomClaims{
+	ac := &JwtCustomClaims{
 		ID:   user.ID,
 		Name: user.Name,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, ac)
 
 	// Generate encoded token and send it as response.
 	t, err = token.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
 	if err != nil {
-		return "", errors.New("error during generate token")
+		return "", "", errors.New("error during generate token")
 	}
 
-	return t, nil
+	rfc := &JwtCustomClaims{
+		ID: user.ID,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
+		},
+	}
+
+	refToken := jwt.NewWithClaims(jwt.SigningMethodHS256, rfc)
+
+	rt, err = refToken.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	if err != nil {
+		return "", "", errors.New("error during generate refresh token")
+	}
+
+	return t, rt, nil
 }
 
 func generatePassword(password string) string {

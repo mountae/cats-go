@@ -22,5 +22,5 @@ func (h *UserAuthHandler) Restricted(c echo.Context) error {
 	name := claims.Name
 	id := claims.ID
 	idStr := strconv.Itoa(id)
-	return c.String(http.StatusOK, "Welcome "+name+idStr)
+	return c.String(http.StatusOK, "Welcome "+name+" "+idStr)
 }

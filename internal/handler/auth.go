@@ -51,6 +51,10 @@ type SignInInput struct {
 	Username string `json:"username" validate:"required,min=3"`
 	Password string `json:"password" validate:"required,min=6"`
 }
+type TokenResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
 
 // @Summary SignIn
 // @Tags auth
@@ -58,7 +62,7 @@ type SignInInput struct {
 // @Accept json
 // @Produce json
 // @Param input body SignInInput true "input"
-// @Success 200 {string} string "token"
+// @Success 200 {object} TokenResponse
 // @Failure 400 {object} models.User
 // @Failure 500 {object} models.User
 // @Router /login [post]
@@ -74,10 +78,10 @@ func (h *UserAuthHandler) SignIn(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, new(models.User))
 	}
 
-	token, err := h.src.GenerateToken(input.Username, input.Password)
+	token, refToken, err := h.src.GenerateToken(input.Username, input.Password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-
-	return c.JSON(http.StatusOK, token)
+	a := TokenResponse{AccessToken: token, RefreshToken: refToken}
+	return c.JSON(http.StatusOK, a)
 }
