@@ -1,5 +1,6 @@
 package models
 
+//HEHE
 type Cats struct {
 	ID   int32  `param:"id" json:"id" bson:"id" query:"id" header:"id" form:"id" xml:"id" validate:"required,numeric,gt=0"`
 	Name string `param:"name" json:"name" bson:"name" query:"name" header:"name" form:"name" xml:"name" validate:"required,min=3"`
