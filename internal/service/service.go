@@ -3,6 +3,8 @@ package service
 import (
 	"CatsGo/internal/models"
 	"CatsGo/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type CatService struct {
@@ -12,9 +14,9 @@ type CatService struct {
 type Service interface {
 	GetAllCatsServ() ([]*models.Cats, error)
 	CreateCatsServ(cats models.Cats) (*models.Cats, error)
-	GetCatServ(id string) (*models.Cats, error)
-	UpdateCatServ(id string, cats models.Cats) (*models.Cats, error)
-	DeleteCatServ(id string) (*models.Cats, error)
+	GetCatServ(id uuid.UUID) *models.Cats
+	UpdateCatServ(id uuid.UUID, cats models.Cats) (*models.Cats, error)
+	DeleteCatServ(id uuid.UUID)
 }
 
 func NewCatService(rps repository.Repository) *CatService {
@@ -26,17 +28,17 @@ func (s *CatService) GetAllCatsServ() ([]*models.Cats, error) {
 }
 
 func (s *CatService) CreateCatsServ(cats models.Cats) (*models.Cats, error) {
-	return s.repository.CreateCats(cats)
+	return s.repository.CreateCat(cats)
 }
 
-func (s *CatService) GetCatServ(id string) (*models.Cats, error) {
+func (s *CatService) GetCatServ(id uuid.UUID) *models.Cats {
 	return s.repository.GetCat(id)
 }
 
-func (s *CatService) UpdateCatServ(id string, cats models.Cats) (*models.Cats, error) {
+func (s *CatService) UpdateCatServ(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
 	return s.repository.UpdateCat(id, cats)
 }
 
-func (s *CatService) DeleteCatServ(id string) (*models.Cats, error) {
-	return s.repository.DeleteCat(id)
+func (s *CatService) DeleteCatServ(id uuid.UUID) {
+	s.repository.DeleteCat(id)
 }

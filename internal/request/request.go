@@ -5,6 +5,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+
+	"github.com/google/uuid"
 )
 
 type CustomValidator struct {
@@ -19,5 +21,6 @@ func (c *CustomValidator) Validate(i interface{}) error {
 }
 
 type RequestCatId struct {
-	ID int32 `param:"id" json:"id" bson:"id" query:"id" header:"id" form:"id" xml:"id" validate:"required,numeric,gt=0"`
+	ID   uuid.UUID `json:"id" bson:"id"`
+	Name string    `json:"name" bson:"name"`
 }

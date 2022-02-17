@@ -85,7 +85,8 @@
                 "summary": "GetCat",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
+                        "format":"uuid",
                         "description": "id",
                         "name": "id",
                         "in": "path",
@@ -127,7 +128,8 @@
                 "summary": "UpdateCat",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
+                        "format":"uuid",
                         "description": "id",
                         "name": "id",
                         "in": "path",
@@ -178,7 +180,8 @@
                 "summary": "DeleteCat",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
+                        "format":"uuid",
                         "description": "id",
                         "name": "id",
                         "in": "path",

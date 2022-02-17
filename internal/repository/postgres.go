@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/joho/godotenv"
 
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
@@ -17,9 +16,9 @@ func RequestDB() *pgxpool.Pool {
 		log.Fatal("postgres error with config files")
 	}
 
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("postgres error loading env variables")
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatal("postgres error loading env variables")
+	// }
 
 	url := fmt.Sprintf("%s://%s:%s@%s:%s/%s",
 		viper.GetString("db.pos"),

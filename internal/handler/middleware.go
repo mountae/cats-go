@@ -3,7 +3,6 @@ package handler
 import (
 	"CatsGo/internal/service"
 	"net/http"
-	"strconv"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -20,7 +19,5 @@ func (h *UserAuthHandler) Restricted(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*service.JwtCustomClaims)
 	name := claims.Name
-	id := claims.ID
-	idStr := strconv.Itoa(id)
-	return c.String(http.StatusOK, "Welcome "+name+" "+idStr)
+	return c.String(http.StatusOK, "Welcome "+name)
 }

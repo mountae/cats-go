@@ -2,11 +2,11 @@ package handler
 
 import (
 	"CatsGo/internal/models"
-	"CatsGo/internal/request"
 	"CatsGo/internal/service"
+	"fmt"
 	"net/http"
-	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -62,24 +62,18 @@ func (h *CatHandler) CreateCats(c echo.Context) error {
 // @Description get cat by id
 // @Accept json
 // @Produce json
-// @Param id path int true "id"
+// @Param id path uuid.UUID true "id"
 // @Success 200 {object} models.Cats
 // @Failure 400 {object} models.Cats
 // @Failure 500 {string} string
 // @Router /cats/{id} [get]
 func (h *CatHandler) GetCat(c echo.Context) error {
-	id := new(request.RequestCatId)
-	if err := c.Bind(id); err != nil {
-		return err
-	}
-	if err := c.Validate(id); err != nil {
-		return c.JSON(http.StatusBadRequest, new(models.Cats))
-	}
 
-	cat, err := h.src.GetCatServ(strconv.Itoa(int(id.ID)))
-	if err != nil {
-		return err
-	}
+	id, _ := uuid.Parse(c.Param("id"))
+	cat := h.src.GetCatServ(id)
+	// if err != nil {
+	// 	return err
+	// }
 	return c.JSON(http.StatusOK, cat)
 }
 
@@ -88,7 +82,7 @@ func (h *CatHandler) GetCat(c echo.Context) error {
 // @Description update cat by id
 // @Accept json
 // @Produce json
-// @Param id path int true "id"
+// @Param id path uuid.UUID true "id"
 // @Param cats body models.Cats true "cats"
 // @Success 200 {object} models.Cats
 // @Failure 400 {object} models.Cats
@@ -96,14 +90,10 @@ func (h *CatHandler) GetCat(c echo.Context) error {
 // @Router /cats/{id} [put]
 func (h *CatHandler) UpdateCat(c echo.Context) error {
 	cats := new(models.Cats)
-	if err := c.Bind(cats); err != nil {
-		return c.JSON(http.StatusBadRequest, new(models.Cats))
-	}
-	if err := c.Validate(cats); err != nil {
-		return c.JSON(http.StatusBadRequest, new(models.Cats))
-	}
-
-	cat, err := h.src.UpdateCatServ(strconv.Itoa(int(cats.ID)), *cats)
+	er := c.Bind(cats)
+	fmt.Println(er)
+	id, _ := uuid.Parse(c.Param("id"))
+	cat, err := h.src.UpdateCatServ(id, *cats)
 	if err != nil {
 		return err
 	}
@@ -115,23 +105,23 @@ func (h *CatHandler) UpdateCat(c echo.Context) error {
 // @Description delete cat by id
 // @Accept json
 // @Produce json
-// @Param id path int true "id"
+// @Param id path uuid.UUID true "id"
 // @Success 200 {object} models.Cats
 // @Failure 400 {object} models.Cats
 // @Failure 500 {string} string
 // @Router /cats/{id} [delete]
 func (h *CatHandler) DeleteCat(c echo.Context) error {
-	id := new(request.RequestCatId)
-	if err := c.Bind(id); err != nil {
-		return c.JSON(http.StatusBadRequest, new(models.Cats))
-	}
-	if err := c.Validate(id); err != nil {
-		return c.JSON(http.StatusBadRequest, new(models.Cats))
-	}
 
-	cat, err := h.src.DeleteCatServ(strconv.Itoa(int(id.ID)))
-	if err != nil {
-		return err
-	}
-	return c.JSON(http.StatusOK, cat)
+	id, _ := uuid.Parse(c.Param("id"))
+	h.src.DeleteCatServ(id)
+	// cat, err := h.src.DeleteCatServ(id)
+	// if err != nil {
+	// 	return err
+	// }
+	return c.JSON(http.StatusOK, nil)
+}
+
+type RequestCatId struct {
+	ID   uuid.UUID `json:"id" bson:"id"`
+	Name string    `json:"name" bson:"name"`
 }

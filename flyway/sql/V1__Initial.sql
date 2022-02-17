@@ -1,5 +1,5 @@
 CREATE TABLE cats (
-    ID integer,
+    ID UUID,
     Name varchar(120)
 );
 

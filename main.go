@@ -56,7 +56,8 @@ func main() {
 		client, cancel := repository2.RequestMongo()
 		defer cancel()
 
-		rps = repository2.NewMongoRepository(client)
+		//TODO: fix pointer
+		// rps = repository2.NewMongoRepository(client)
 		rpsAuth = repository2.NewMongoRepository(client)
 	}
 

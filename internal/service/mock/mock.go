@@ -2,6 +2,8 @@ package mock
 
 import (
 	"CatsGo/internal/models"
+
+	"github.com/google/uuid"
 )
 
 type MockCatServ struct {
@@ -13,7 +15,7 @@ func NewMockCatServ() *MockCatServ {
 
 func (m *MockCatServ) GetAllCatsServ() ([]*models.Cats, error) {
 	cat := models.Cats{
-		ID:   0,
+		ID:   uuid.New(),
 		Name: "",
 	}
 	allcats := []*models.Cats{&cat}
@@ -24,28 +26,28 @@ func (m *MockCatServ) CreateCatsServ(cats models.Cats) (*models.Cats, error) {
 	return &cats, nil
 }
 
-func (m *MockCatServ) GetCatServ(id string) (*models.Cats, error) {
+func (m *MockCatServ) GetCatServ(id uuid.UUID) (*models.Cats, error) {
 	cat := models.Cats{
-		ID:   1,
+		ID:   uuid.New(),
 		Name: "Steve Jobs",
 	}
 	return &cat, nil
 }
 
-func (m *MockCatServ) UpdateCatServ(id string, cats models.Cats) (*models.Cats, error) {
+func (m *MockCatServ) UpdateCatServ(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
 	return &cats, nil
 }
 
-func (m *MockCatServ) DeleteCatServ(id string) (*models.Cats, error) {
+func (m *MockCatServ) DeleteCatServ(id uuid.UUID) (*models.Cats, error) {
 	cat := models.Cats{
-		ID:   1,
+		ID:   uuid.New(),
 		Name: "Steve Jobs",
 	}
 	return &cat, nil
 }
 
-func (m *MockCatServ) CreateUserServ(user models.User) (int, error) {
-	user.ID = 1
+func (m *MockCatServ) CreateUserServ(user models.User) (uuid.UUID, error) {
+	user.ID = uuid.New()
 	return user.ID, nil
 }
 

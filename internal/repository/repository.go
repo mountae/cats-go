@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
@@ -24,10 +25,10 @@ type MongoRepository struct {
 
 type Repository interface {
 	GetAllCats() ([]*models.Cats, error)
-	CreateCats(cats models.Cats) (*models.Cats, error)
-	GetCat(id string) (*models.Cats, error)
-	UpdateCat(id string, cats models.Cats) (*models.Cats, error)
-	DeleteCat(id string) (*models.Cats, error)
+	CreateCat(cats models.Cats) (*models.Cats, error)
+	GetCat(id uuid.UUID) *models.Cats
+	UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error)
+	DeleteCat(id uuid.UUID)
 }
 
 func NewPostgresRepository(conn *pgxpool.Pool) *PostgresRepository {
@@ -42,120 +43,72 @@ func (c *PostgresRepository) GetAllCats() ([]*models.Cats, error) {
 
 	var allcats []*models.Cats
 
-	rows, err := c.conn.Query(context.Background(), "SELECT ID, name FROM cats")
+	rows, err := c.conn.Query(context.Background(), "SELECT id, name FROM cats")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for rows.Next() {
+		var cat models.Cats
 
-		cats := models.Cats{
-			ID:   0,
-			Name: "",
+		if err := rows.Scan(&cat.ID, &cat.Name); err != nil {
+			return nil, err
 		}
 
-		values, err := rows.Values()
-		if err != nil {
-			log.Fatal(err)
-		}
-		cats.ID = values[0].(int32)
-		cats.Name = values[1].(string)
-		allcats = append(allcats, &cats)
+		allcats = append(allcats, &cat)
 	}
 
 	return allcats, nil
 }
 
-func (c *PostgresRepository) CreateCats(cats models.Cats) (*models.Cats, error) {
+func (c *PostgresRepository) CreateCat(cat models.Cats) (*models.Cats, error) {
 
+	cat.ID = uuid.New()
 	// Add new cat to DB
-	commandTag, err := c.conn.Exec(context.Background(), "INSERT INTO cats VALUES ($1, $2)", cats.ID, cats.Name)
-	if err != nil {
-		return &cats, err
-	}
-	if commandTag.RowsAffected() != 1 {
-		return &cats, errors.New("failed to create a cat")
-	}
-
-	return &cats, nil
-}
-
-func (c *PostgresRepository) GetCat(id string) (*models.Cats, error) {
-
-	var cat models.Cats
-
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return &cat, nil
-	}
-
-	// Get 'name'
-	var name string
-	err = c.conn.QueryRow(context.Background(), "SELECT name FROM cats WHERE id=$1", id).Scan(&name)
+	commandTag, err := c.conn.Exec(context.Background(), "INSERT INTO cats VALUES ($1, $2)", cat.ID, cat.Name)
 	if err != nil {
 		return &cat, err
 	}
-
-	// Set params for models.Cats
-	cat.ID = int32(idInt)
-	cat.Name = name
+	if commandTag.RowsAffected() != 1 {
+		return &cat, errors.New("failed to create a cat")
+	}
 
 	return &cat, nil
 }
 
-func (c *PostgresRepository) UpdateCat(id string, cats models.Cats) (*models.Cats, error) {
+func (c *PostgresRepository) GetCat(id uuid.UUID) *models.Cats {
 
-	// Conv id -> int
-	idInt, err := strconv.Atoi(id)
+	var cat models.Cats
+
+	result := c.conn.QueryRow(context.Background(), "SELECT * FROM cats WHERE id=$1", id)
+
+	err := result.Scan(&cat.ID, &cat.Name)
 	if err != nil {
-		return &cats, err
+		return nil
 	}
 
-	// Refresh models.Cat
-	cats.ID = int32(idInt)
+	return &cat
+}
+
+func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
 
 	// Update DB
-	commandTag, err := c.conn.Exec(context.Background(), "UPDATE cats SET name = $1 WHERE id = $2", cats.Name, cats.ID)
+	result, err := c.conn.Exec(context.Background(), "UPDATE cats SET name = $1 WHERE id = $2", cats.Name, id)
 	if err != nil {
 		return &cats, err
 	}
-	if commandTag.RowsAffected() != 1 {
+	if result.RowsAffected() != 1 {
 		return &cats, errors.New("row isn't updated")
 	}
 
 	return &cats, nil
 }
 
-func (c *PostgresRepository) DeleteCat(id string) (*models.Cats, error) {
-
-	var cat models.Cats
-
-	// Conv id -> int
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return &cat, err
-	}
-
-	// Refresh models.Cats
-	cat.ID = int32(idInt)
-	// Get 'name'
-	var name string
-	err = c.conn.QueryRow(context.Background(), "SELECT name FROM cats WHERE id=$1", id).Scan(&name)
-	if err != nil {
-		return &cat, err
-	}
-	cat.Name = name
+func (c *PostgresRepository) DeleteCat(id uuid.UUID) {
 
 	// Delete from DB
-	commandTag, err := c.conn.Exec(context.Background(), "DELETE FROM cats WHERE id=$1", id)
-	if err != nil {
-		return &cat, err
-	}
-	if commandTag.RowsAffected() != 1 {
-		return &cat, errors.New("no such a row to delete")
-	}
+	c.conn.Exec(context.Background(), "DELETE FROM cats WHERE id=$1", id)
 
-	return &cat, nil
 }
 
 func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
@@ -207,21 +160,13 @@ func (c *MongoRepository) GetCat(id string) (*models.Cats, error) {
 	return &cat, nil
 }
 
-func (c *MongoRepository) UpdateCat(id string, cats models.Cats) (*models.Cats, error) {
-	// Conv id -> int
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return &cats, err
-	}
-
-	// Refresh models.Cat
-	cats.ID = int32(idInt)
+func (c *MongoRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
 
 	// Changing DB values
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
 	filter := bson.D{primitive.E{Key: "id", Value: cats.ID}}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "name", Value: cats.Name}}}}
-	_, err = collection.UpdateOne(context.TODO(), filter, update)
+	_, err := collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -231,18 +176,9 @@ func (c *MongoRepository) UpdateCat(id string, cats models.Cats) (*models.Cats, 
 func (c *MongoRepository) DeleteCat(id string) (*models.Cats, error) {
 	var cat models.Cats
 
-	// Conv id -> int
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return &cat, err
-	}
-
-	// Refresh models.Cats
-	cat.ID = int32(idInt)
-
 	// Delete from DB
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
-	_, err = collection.DeleteOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: idInt}})
+	_, err := collection.DeleteOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: id}})
 	if err != nil {
 		log.Fatal(err)
 	}

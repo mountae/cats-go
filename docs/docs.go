@@ -99,7 +99,7 @@ var doc = `{
                 "summary": "GetCat",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "id",
                         "name": "id",
                         "in": "path",
@@ -141,7 +141,7 @@ var doc = `{
                 "summary": "UpdateCat",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "id",
                         "name": "id",
                         "in": "path",
@@ -192,7 +192,7 @@ var doc = `{
                 "summary": "DeleteCat",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "id",
                         "name": "id",
                         "in": "path",

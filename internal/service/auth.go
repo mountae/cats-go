@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
@@ -26,8 +27,8 @@ func NewUserAuthService(r repository.Auth) *UserAuthService {
 }
 
 type JwtCustomClaims struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 	jwt.StandardClaims
 }
 
