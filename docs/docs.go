@@ -56,7 +56,7 @@ var doc = `{
                 "tags": [
                     "Cats"
                 ],
-                "summary": "CreateCats",
+                "summary": "CreateCat",
                 "parameters": [
                     {
                         "description": "cats",

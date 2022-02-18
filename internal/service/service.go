@@ -13,7 +13,7 @@ type CatService struct {
 
 type Service interface {
 	GetAllCatsServ() ([]*models.Cats, error)
-	CreateCatsServ(cats models.Cats) (*models.Cats, error)
+	CreateCatServ(cats models.Cats) (*models.Cats, error)
 	GetCatServ(id uuid.UUID) *models.Cats
 	UpdateCatServ(id uuid.UUID, cats models.Cats) (*models.Cats, error)
 	DeleteCatServ(id uuid.UUID)
@@ -27,7 +27,7 @@ func (s *CatService) GetAllCatsServ() ([]*models.Cats, error) {
 	return s.repository.GetAllCats()
 }
 
-func (s *CatService) CreateCatsServ(cats models.Cats) (*models.Cats, error) {
+func (s *CatService) CreateCatServ(cats models.Cats) (*models.Cats, error) {
 	return s.repository.CreateCat(cats)
 }
 

@@ -69,7 +69,7 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/models.Cats'
-      summary: CreateCats
+      summary: CreateCat
       tags:
       - Cats
   /cats/{id}:

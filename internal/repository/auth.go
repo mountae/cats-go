@@ -4,25 +4,28 @@ import (
 	"CatsGo/internal/models"
 	"context"
 	"errors"
-
+	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Auth interface {
-	CreateUser(user models.User) (int, error)
+	CreateUser(user models.User) (uuid.UUID, error)
 	GetUser(username, password string) (models.User, error)
 }
 
-func (c *PostgresRepository) CreateUser(user models.User) (int, error) {
-	var id int
+func (c *PostgresRepository) CreateUser(user models.User) (uuid.UUID, error) {
+	var userData models.User
 
-	err := c.conn.QueryRow(context.Background(), "INSERT INTO users (ID, Name, Username, Password) "+
-		"VALUES (nextval('users_sequence'), $1, $2, $3) RETURNING ID",
-		user.Name, user.Username, user.Password).Scan(&id)
+	id := uuid.New()
+	row := c.conn.QueryRow(context.Background(), "INSERT INTO users (ID, Name, Username, Password) "+
+		"VALUES ($1, $2, $3, $4) RETURNING id, name, username, password",
+		id, user.Name, user.Username, user.Password)
+	// TODO: fix how dispalying new user after suссess registration
+	err := row.Scan(&id, &userData.Name, &userData.Username, &userData.Password)
 	if err != nil {
-		return 0, errors.New("error when adding to the database")
+		return id, errors.New("error when adding to the database")
 	}
 
 	return id, nil
@@ -45,7 +48,7 @@ func (c *PostgresRepository) GetUser(username, password string) (models.User, er
 	return user, nil
 }
 
-func (c *MongoRepository) CreateUser(user models.User) (int, error) {
+func (c *MongoRepository) CreateUser(user models.User) (uuid.UUID, error) {
 	collection := c.client.Database("users").Collection("users")
 
 	docs := []interface{}{
@@ -58,7 +61,7 @@ func (c *MongoRepository) CreateUser(user models.User) (int, error) {
 		log.Fatal(insertErr)
 	}
 
-	id := 1
+	id := uuid.New()
 
 	return id, nil
 }

@@ -18,7 +18,7 @@ type UserAuthService struct {
 }
 
 type Auth interface {
-	CreateUserServ(user models.User) (int, error)
+	CreateUserServ(user models.User) (uuid.UUID, error)
 	GenerateToken(username string, password string) (t string, rt string, err error)
 }
 
@@ -32,7 +32,7 @@ type JwtCustomClaims struct {
 	jwt.StandardClaims
 }
 
-func (s *UserAuthService) CreateUserServ(user models.User) (int, error) {
+func (s *UserAuthService) CreateUserServ(user models.User) (uuid.UUID, error) {
 	user.Password = generatePassword(user.Password)
 	return s.repository.CreateUser(user)
 }
@@ -47,7 +47,7 @@ func (s *UserAuthService) GenerateToken(username string, password string) (t str
 		ID:   user.ID,
 		Name: user.Name,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 30).Unix(),
 		},
 	}
 
@@ -74,6 +74,25 @@ func (s *UserAuthService) GenerateToken(username string, password string) (t str
 	}
 
 	return t, rt, nil
+}
+
+//TODO: write down valid refrTokens func
+func (s *UserAuthService) refreshTokens(rt string) {
+	//ncl := &JwtCustomClaims{
+	//	ID:   user.ID,
+	//	Name: user.Name,
+	//	StandardClaims: jwt.StandardClaims{
+	//		ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+	//	},
+	//}
+	//
+	//token := jwt.NewWithClaims(jwt.SigningMethodHS256, ncl)
+	//
+	//// Generate encoded token and send it as response.
+	//t, err = token.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	//if err != nil {
+	//	return "", "", errors.New("error during generate token")
+	//}
 }
 
 func generatePassword(password string) string {

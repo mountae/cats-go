@@ -32,7 +32,7 @@ func (h *CatHandler) GetAllCats(c echo.Context) error {
 	return c.JSON(http.StatusOK, allcats)
 }
 
-// @Summary CreateCats
+// @Summary CreateCat
 // @Tags Cats
 // @Description create cat
 // @Accept json
@@ -41,7 +41,7 @@ func (h *CatHandler) GetAllCats(c echo.Context) error {
 // @Success 201 {object} models.Cats
 // @Failure 400 {object} models.Cats
 // @Router /cats [post]
-func (h *CatHandler) CreateCats(c echo.Context) error {
+func (h *CatHandler) CreateCat(c echo.Context) error {
 	cats := new(models.Cats)
 	if err := c.Bind(cats); err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.Cats))
@@ -50,7 +50,7 @@ func (h *CatHandler) CreateCats(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, new(models.Cats))
 	}
 
-	cat, err := h.src.CreateCatsServ(*cats)
+	cat, err := h.src.CreateCatServ(*cats)
 	if err != nil {
 		return err
 	}
@@ -71,9 +71,7 @@ func (h *CatHandler) GetCat(c echo.Context) error {
 
 	id, _ := uuid.Parse(c.Param("id"))
 	cat := h.src.GetCatServ(id)
-	// if err != nil {
-	// 	return err
-	// }
+
 	return c.JSON(http.StatusOK, cat)
 }
 
@@ -114,10 +112,7 @@ func (h *CatHandler) DeleteCat(c echo.Context) error {
 
 	id, _ := uuid.Parse(c.Param("id"))
 	h.src.DeleteCatServ(id)
-	// cat, err := h.src.DeleteCatServ(id)
-	// if err != nil {
-	// 	return err
-	// }
+
 	return c.JSON(http.StatusOK, nil)
 }
 

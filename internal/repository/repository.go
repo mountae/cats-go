@@ -40,14 +40,12 @@ func NewMongoRepository(client *mongo.Client) *MongoRepository {
 }
 
 func (c *PostgresRepository) GetAllCats() ([]*models.Cats, error) {
-
 	var allcats []*models.Cats
 
 	rows, err := c.conn.Query(context.Background(), "SELECT id, name FROM cats")
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	for rows.Next() {
 		var cat models.Cats
 
@@ -57,42 +55,33 @@ func (c *PostgresRepository) GetAllCats() ([]*models.Cats, error) {
 
 		allcats = append(allcats, &cat)
 	}
-
 	return allcats, nil
 }
 
 func (c *PostgresRepository) CreateCat(cat models.Cats) (*models.Cats, error) {
-
 	cat.ID = uuid.New()
-	// Add new cat to DB
-	commandTag, err := c.conn.Exec(context.Background(), "INSERT INTO cats VALUES ($1, $2)", cat.ID, cat.Name)
+	result, err := c.conn.Exec(context.Background(), "INSERT INTO cats VALUES ($1, $2)", cat.ID, cat.Name)
 	if err != nil {
 		return &cat, err
 	}
-	if commandTag.RowsAffected() != 1 {
+	if result.RowsAffected() != 1 {
 		return &cat, errors.New("failed to create a cat")
 	}
-
 	return &cat, nil
 }
 
 func (c *PostgresRepository) GetCat(id uuid.UUID) *models.Cats {
-
 	var cat models.Cats
 
 	result := c.conn.QueryRow(context.Background(), "SELECT * FROM cats WHERE id=$1", id)
-
 	err := result.Scan(&cat.ID, &cat.Name)
 	if err != nil {
 		return nil
 	}
-
 	return &cat
 }
 
 func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
-
-	// Update DB
 	result, err := c.conn.Exec(context.Background(), "UPDATE cats SET name = $1 WHERE id = $2", cats.Name, id)
 	if err != nil {
 		return &cats, err
@@ -100,19 +89,14 @@ func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.
 	if result.RowsAffected() != 1 {
 		return &cats, errors.New("row isn't updated")
 	}
-
 	return &cats, nil
 }
 
 func (c *PostgresRepository) DeleteCat(id uuid.UUID) {
-
-	// Delete from DB
 	c.conn.Exec(context.Background(), "DELETE FROM cats WHERE id=$1", id)
-
 }
 
 func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
-
 	var allcats = []*models.Cats{}
 
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
@@ -121,7 +105,6 @@ func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
 		panic(currErr)
 	}
 	defer cur.Close(context.TODO())
-
 	if err := cur.All(context.TODO(), &allcats); err != nil {
 		panic(err)
 	}
@@ -129,13 +112,10 @@ func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
 }
 
 func (c *MongoRepository) CreateCats(cats models.Cats) (*models.Cats, error) {
-
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
-
 	docs := []interface{}{
 		bson.D{primitive.E{Key: "id", Value: cats.ID}, {Key: "name", Value: cats.Name}},
 	}
-
 	_, insertErr := collection.InsertMany(context.TODO(), docs)
 	if insertErr != nil {
 		log.Fatal(insertErr)
@@ -150,9 +130,7 @@ func (c *MongoRepository) GetCat(id string) (*models.Cats, error) {
 	if err != nil {
 		return &cat, nil
 	}
-
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
-
 	err = collection.FindOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: idInt}}).Decode(&cat)
 	if err != nil {
 		return &cat, err
@@ -161,8 +139,6 @@ func (c *MongoRepository) GetCat(id string) (*models.Cats, error) {
 }
 
 func (c *MongoRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
-
-	// Changing DB values
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
 	filter := bson.D{primitive.E{Key: "id", Value: cats.ID}}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "name", Value: cats.Name}}}}
@@ -176,12 +152,10 @@ func (c *MongoRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cat
 func (c *MongoRepository) DeleteCat(id string) (*models.Cats, error) {
 	var cat models.Cats
 
-	// Delete from DB
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
 	_, err := collection.DeleteOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: id}})
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	return &cat, nil
 }

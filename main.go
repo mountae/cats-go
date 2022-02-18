@@ -65,7 +65,7 @@ func main() {
 	hndlr := handler.NewCatHandler(srv)
 
 	e.GET("/cats", hndlr.GetAllCats)
-	e.POST("/cats", hndlr.CreateCats)
+	e.POST("/cats", hndlr.CreateCat)
 	e.GET("/cats/:id", hndlr.GetCat)
 	e.PUT("/cats/:id", hndlr.UpdateCat)
 	e.DELETE("/cats/:id", hndlr.DeleteCat)

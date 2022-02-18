@@ -22,7 +22,7 @@ func (m *MockCatServ) GetAllCatsServ() ([]*models.Cats, error) {
 	return allcats, nil
 }
 
-func (m *MockCatServ) CreateCatsServ(cats models.Cats) (*models.Cats, error) {
+func (m *MockCatServ) CreateCatServ(cats models.Cats) (*models.Cats, error) {
 	return &cats, nil
 }
 
