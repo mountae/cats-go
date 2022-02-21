@@ -74,6 +74,7 @@ func main() {
 	hndlrAuth := handler.NewUserAuthHandler(srvAuth)
 	e.POST("/register", hndlrAuth.SignUp)
 	e.POST("/login", hndlrAuth.SignIn)
+	e.POST("/token", hndlrAuth.UpdateTokens)
 
 	r := e.Group("/restrict")
 	{

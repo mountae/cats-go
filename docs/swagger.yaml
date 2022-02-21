@@ -223,6 +223,36 @@ paths:
       summary: SignUp
       tags:
       - auth
+      /token:
+    post:
+      consumes:
+      - application/json
+      description: update access and refresh token pair
+      parameters:
+      - description: t_input
+        in: body
+        name: t_input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TokenResponce'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.User'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: UpdateTokens
+      tags:
+      - auth
   /restrict:
     get:
       description: example closed page

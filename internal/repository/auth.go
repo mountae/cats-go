@@ -4,6 +4,7 @@ import (
 	"CatsGo/internal/models"
 	"context"
 	"errors"
+
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,24 +12,23 @@ import (
 )
 
 type Auth interface {
-	CreateUser(user models.User) (uuid.UUID, error)
+	CreateUser(user models.User) (models.User, error)
 	GetUser(username, password string) (models.User, error)
 }
 
-func (c *PostgresRepository) CreateUser(user models.User) (uuid.UUID, error) {
+func (c *PostgresRepository) CreateUser(user models.User) (models.User, error) {
 	var userData models.User
 
 	id := uuid.New()
 	row := c.conn.QueryRow(context.Background(), "INSERT INTO users (ID, Name, Username, Password) "+
-		"VALUES ($1, $2, $3, $4) RETURNING id, name, username, password",
+		"VALUES ($1, $2, $3, $4) RETURNING id, name, username",
 		id, user.Name, user.Username, user.Password)
-	// TODO: fix how dispalying new user after suссess registration
-	err := row.Scan(&id, &userData.Name, &userData.Username, &userData.Password)
+	err := row.Scan(&userData.ID, &userData.Name, &userData.Username)
 	if err != nil {
-		return id, errors.New("error when adding to the database")
+		return userData, errors.New("error when adding to the database")
 	}
 
-	return id, nil
+	return userData, nil
 }
 
 func (c *PostgresRepository) GetUser(username, password string) (models.User, error) {
@@ -48,7 +48,7 @@ func (c *PostgresRepository) GetUser(username, password string) (models.User, er
 	return user, nil
 }
 
-func (c *MongoRepository) CreateUser(user models.User) (uuid.UUID, error) {
+func (c *MongoRepository) CreateUser(user models.User) (models.User, error) {
 	collection := c.client.Database("users").Collection("users")
 
 	docs := []interface{}{
@@ -61,9 +61,9 @@ func (c *MongoRepository) CreateUser(user models.User) (uuid.UUID, error) {
 		log.Fatal(insertErr)
 	}
 
-	id := uuid.New()
+	//id := uuid.New()
 
-	return id, nil
+	return models.User{}, nil
 }
 
 func (c *MongoRepository) GetUser(username, password string) (models.User, error) {

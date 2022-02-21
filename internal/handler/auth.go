@@ -85,3 +85,31 @@ func (h *UserAuthHandler) SignIn(c echo.Context) error {
 	a := TokenResponse{AccessToken: token, RefreshToken: refToken}
 	return c.JSON(http.StatusOK, a)
 }
+
+// @Summary UpdateTokens
+// @Tags auth
+// @Description update access and refresh token pair
+// @Accept json
+// @Produce json
+// @Param t_input body TokenRespone true "t_input"
+// @Success 200 {object} NewTokenResponse
+// @Failure 400 {object} models.User
+// @Failure 500 {object} models.User
+// @Router /token [post]
+func (h *UserAuthHandler) UpdateTokens(c echo.Context) error {
+	var t_input TokenResponse
+
+	err := json.NewDecoder(c.Request().Body).Decode(&t_input)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, new(models.User))
+	}
+	if err = c.Validate(t_input); err != nil {
+		return c.JSON(http.StatusBadRequest, new(models.User))
+	}
+	ntoken, nrefToken, err := h.src.RefreshTokens(t_input.RefreshToken)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	b := TokenResponse{AccessToken: ntoken, RefreshToken: nrefToken}
+	return c.JSON(http.StatusOK, b)
+}

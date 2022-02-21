@@ -18,8 +18,9 @@ type UserAuthService struct {
 }
 
 type Auth interface {
-	CreateUserServ(user models.User) (uuid.UUID, error)
+	CreateUserServ(user models.User) (models.User, error)
 	GenerateToken(username string, password string) (t string, rt string, err error)
+	RefreshTokens(rt string) (nt, nrt string, err error)
 }
 
 func NewUserAuthService(r repository.Auth) *UserAuthService {
@@ -32,7 +33,7 @@ type JwtCustomClaims struct {
 	jwt.StandardClaims
 }
 
-func (s *UserAuthService) CreateUserServ(user models.User) (uuid.UUID, error) {
+func (s *UserAuthService) CreateUserServ(user models.User) (models.User, error) {
 	user.Password = generatePassword(user.Password)
 	return s.repository.CreateUser(user)
 }
@@ -47,7 +48,7 @@ func (s *UserAuthService) GenerateToken(username string, password string) (t str
 		ID:   user.ID,
 		Name: user.Name,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 30).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 		},
 	}
 
@@ -76,23 +77,35 @@ func (s *UserAuthService) GenerateToken(username string, password string) (t str
 	return t, rt, nil
 }
 
-//TODO: write down valid refrTokens func
-func (s *UserAuthService) refreshTokens(rt string) {
-	//ncl := &JwtCustomClaims{
-	//	ID:   user.ID,
-	//	Name: user.Name,
-	//	StandardClaims: jwt.StandardClaims{
-	//		ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
-	//	},
-	//}
-	//
-	//token := jwt.NewWithClaims(jwt.SigningMethodHS256, ncl)
-	//
-	//// Generate encoded token and send it as response.
-	//t, err = token.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
-	//if err != nil {
-	//	return "", "", errors.New("error during generate token")
-	//}
+//TODO: write down valid refreshTokens func
+func (s *UserAuthService) RefreshTokens(rt string) (nt string, nrt string, err error) {
+	ncl := &JwtCustomClaims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+		},
+	}
+
+	ntoken := jwt.NewWithClaims(jwt.SigningMethodHS256, ncl)
+
+	// Generate encoded token and send it as response.
+	nt, err = ntoken.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	if err != nil {
+		return "", "", errors.New("error during generate new token")
+	}
+
+	nrfc := &JwtCustomClaims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
+		},
+	}
+
+	nrefToken := jwt.NewWithClaims(jwt.SigningMethodHS256, nrfc)
+
+	nrt, err = nrefToken.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	if err != nil {
+		return "", "", errors.New("error during generate new refresh token")
+	}
+	return nt, nrt, nil
 }
 
 func generatePassword(password string) string {
