@@ -1,3 +1,4 @@
+// Package models for init model entities
 package models
 
 import (

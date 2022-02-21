@@ -13,10 +13,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+// UserAuthService repo link
 type UserAuthService struct {
 	repository repository.Auth
 }
 
+// Auth interface init
 type Auth interface {
 	CreateUserServ(user models.User) (models.User, error)
 	GenerateToken(username string, password string) (t string, rt string, err error)
@@ -38,7 +40,7 @@ func (s *UserAuthService) CreateUserServ(user models.User) (models.User, error) 
 	return s.repository.CreateUser(user)
 }
 
-func (s *UserAuthService) GenerateToken(username string, password string) (t string, rt string, err error) {
+func (s *UserAuthService) GenerateToken(username, password string) (t, rt string, err error) {
 	user, err := s.repository.GetUser(username, generatePassword(password))
 	if err != nil {
 		return "", "", errors.New("error with generate token in repository")
@@ -77,7 +79,7 @@ func (s *UserAuthService) GenerateToken(username string, password string) (t str
 	return t, rt, nil
 }
 
-func (s *UserAuthService) RefreshTokens(rt string) (nt string, nrt string, err error) {
+func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 	verifyResult, error := VerifyToken(rt)
 
 	if verifyResult == nil {
@@ -91,7 +93,6 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt string, nrt string, err e
 
 	ntoken := jwt.NewWithClaims(jwt.SigningMethodHS256, ncl)
 
-	// Generate encoded token and send it as response.
 	nt, err = ntoken.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
 	if err != nil {
 		return "", "", errors.New("error during generate new token")
@@ -114,13 +115,13 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt string, nrt string, err e
 
 func VerifyToken(t string) (*jwt.Token, error) {
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
-		//Make sure that the token method conform to "SigningMethodHMAC"
+		// Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")), nil
 	})
-	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
+	if _, ok := token.Claims.(jwt.StandardClaims); !ok && !token.Valid {
 		return nil, err
 	}
 

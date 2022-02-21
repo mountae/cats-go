@@ -1,4 +1,3 @@
-# all available settings of specific linters
 linters-settings:
   dupl:
     threshold: 100
@@ -20,15 +19,15 @@ linters-settings:
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: git.playchat.net
-  golint:
+    local-prefixes: gitlab.effective-soft.com/go/research-service
+  revive:
     min-confidence: 0.8
   govet:
     check-shadowing: true
+    fieldalignment:
+      suggest-new: true
   lll:
     line-length: 180
-  maligned:
-    suggest-new: true
   misspell:
     locale: US
 
@@ -51,21 +50,19 @@ linters:
     - godox
     - gofmt
     - goimports
-    - golint
+    - revive
     - gomnd
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - interfacer
     - lll
-    - maligned
     - misspell
     - nakedret
     - prealloc
     - rowserrcheck
-    - scopelint
+    - exportloopref
     - staticcheck
     - structcheck
     - stylecheck
@@ -93,4 +90,3 @@ issues:
         - errcheck
         - dupl
         - gosec
-

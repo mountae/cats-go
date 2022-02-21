@@ -111,7 +111,10 @@ func (h *CatHandler) UpdateCat(c echo.Context) error {
 func (h *CatHandler) DeleteCat(c echo.Context) error {
 
 	id, _ := uuid.Parse(c.Param("id"))
-	h.src.DeleteCatServ(id)
+	err := h.src.DeleteCatServ(id)
+	if err != nil {
+		return err
+	}
 
 	return c.JSON(http.StatusOK, nil)
 }
