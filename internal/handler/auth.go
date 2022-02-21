@@ -56,6 +56,10 @@ type TokenResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+type RefreshTokenRequest struct {
+	Token string `json:"Token"`
+}
+
 // @Summary SignIn
 // @Tags auth
 // @Description decode params and send them in service for generate token
@@ -92,12 +96,12 @@ func (h *UserAuthHandler) SignIn(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param t_input body TokenRespone true "t_input"
-// @Success 200 {object} NewTokenResponse
+// @Success 200 {object} TokenResponse
 // @Failure 400 {object} models.User
 // @Failure 500 {object} models.User
 // @Router /token [post]
 func (h *UserAuthHandler) UpdateTokens(c echo.Context) error {
-	var t_input TokenResponse
+	var t_input RefreshTokenRequest
 
 	err := json.NewDecoder(c.Request().Body).Decode(&t_input)
 	if err != nil {
@@ -106,7 +110,7 @@ func (h *UserAuthHandler) UpdateTokens(c echo.Context) error {
 	if err = c.Validate(t_input); err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.User))
 	}
-	ntoken, nrefToken, err := h.src.RefreshTokens(t_input.RefreshToken)
+	ntoken, nrefToken, err := h.src.RefreshTokens(t_input.Token)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}

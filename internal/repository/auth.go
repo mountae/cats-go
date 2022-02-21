@@ -61,8 +61,6 @@ func (c *MongoRepository) CreateUser(user models.User) (models.User, error) {
 		log.Fatal(insertErr)
 	}
 
-	//id := uuid.New()
-
 	return models.User{}, nil
 }
 
