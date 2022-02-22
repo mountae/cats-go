@@ -317,12 +317,12 @@
                 "summary": "UpdateTokens",
                 "parameters": [
                     {
-                        "description": "t_input",
-                        "name": "t_input",
+                        "description": "tInput",
+                        "name": "tInput",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.TokenResponce"
+                            "$ref": "#/definitions/handler.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -330,7 +330,7 @@
                     "200": {
                         "description": "token",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handler.TokenResponse"
                         }
                     },
                     "400": {
@@ -381,10 +381,29 @@
         "handler.SignInInput": {
             "type": "object",
             "properties": {
-                "password": {
+                "username": {
                     "type": "string"
                 },
-                "username": {
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.RefreshTokenRequest": {
+            "type": "object",
+            "properties": {
+                "token": {
                     "type": "string"
                 }
             }
@@ -393,7 +412,7 @@
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "uuid.UUID"
                 },
                 "name": {
                     "type": "string"
@@ -404,15 +423,15 @@
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "uuid.UUID"
                 },
                 "name": {
                     "type": "string"
                 },
-                "password": {
+                "username": {
                     "type": "string"
                 },
-                "username": {
+                "password": {
                     "type": "string"
                 }
             }

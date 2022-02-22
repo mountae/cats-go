@@ -328,12 +328,12 @@ var doc = `{
                 "summary": "UpdateTokens",
                 "parameters": [
                     {
-                        "description": "t_input",
-                        "name": "t_input",
+                        "description": "tInput",
+                        "name": "tInput",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.TokenResponce"
+                            "$ref": "#/definitions/handler.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -341,7 +341,7 @@ var doc = `{
                     "200": {
                         "description": "token",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handler.TokenResponse"
                         }
                     },
                     "400": {
@@ -392,10 +392,29 @@ var doc = `{
         "handler.SignInInput": {
             "type": "object",
             "properties": {
-                "password": {
+				"username": {
                     "type": "string"
                 },
-                "username": {
+                "password": {
+                    "type": "string"
+                }                
+            }
+        },
+		"handler.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+		"handler.RefreshTokenRequest": {
+            "type": "object",
+            "properties": {
+                "token": {
                     "type": "string"
                 }
             }
@@ -404,7 +423,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "uuid.UUID"
                 },
                 "name": {
                     "type": "string"
@@ -415,15 +434,15 @@ var doc = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "uuid.UUID"
                 },
-                "name": {
+				"name": {
+                    "type": "string"
+                },
+				"username": {
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 }
             }

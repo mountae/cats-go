@@ -1,9 +1,10 @@
+// Package service provides logic for authorization
 package service
 
 import (
 	"CatsGo/internal/models"
 	"CatsGo/internal/repository"
-	"crypto/sha1"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"time"
@@ -13,34 +14,43 @@ import (
 	"github.com/spf13/viper"
 )
 
-// UserAuthService repo link
+// UserAuthService linking repo
 type UserAuthService struct {
 	repository repository.Auth
 }
 
-// Auth interface init
+// Auth contains logic for auth cases
 type Auth interface {
 	CreateUserServ(user models.User) (models.User, error)
 	GenerateToken(username string, password string) (t string, rt string, err error)
 	RefreshTokens(rt string) (nt, nrt string, err error)
 }
 
+// NewUserAuthService creation
 func NewUserAuthService(r repository.Auth) *UserAuthService {
 	return &UserAuthService{repository: r}
 }
 
+// JwtCustomClaims struct init
 type JwtCustomClaims struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
 	jwt.StandardClaims
 }
 
+// CreateUserServ provides new service for user
 func (s *UserAuthService) CreateUserServ(user models.User) (models.User, error) {
 	user.Password = generatePassword(user.Password)
 	return s.repository.CreateUser(user)
 }
 
+// GenerateToken func creates a pair of jwt tokens
 func (s *UserAuthService) GenerateToken(username, password string) (t, rt string, err error) {
+	const (
+		att = 15
+		rtt = 1
+	)
+
 	user, err := s.repository.GetUser(username, generatePassword(password))
 	if err != nil {
 		return "", "", errors.New("error with generate token in repository")
@@ -50,7 +60,7 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 		ID:   user.ID,
 		Name: user.Username,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * att).Unix(),
 		},
 	}
 
@@ -65,7 +75,7 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 	rfc := &JwtCustomClaims{
 		ID: user.ID,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * rtt).Unix(),
 		},
 	}
 
@@ -79,15 +89,20 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 	return t, rt, nil
 }
 
+// RefreshTokens func provides force update a pair of tokens
 func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
-	verifyResult, error := VerifyToken(rt)
+	const (
+		natt = 30
+		nrtt = 3
+	)
+	verifyResult, err := VerifyToken(rt)
 
 	if verifyResult == nil {
-		return "", "", error
+		return "", "", err
 	}
 	ncl := &JwtCustomClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 30).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * natt).Unix(),
 		},
 	}
 
@@ -100,7 +115,7 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 
 	nrfc := &JwtCustomClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * nrtt).Unix(),
 		},
 	}
 
@@ -113,6 +128,7 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 	return nt, nrt, nil
 }
 
+// VerifyToken func does validation for entered tokens
 func VerifyToken(t string) (*jwt.Token, error) {
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		// Make sure that the token method conform to "SigningMethodHMAC"
@@ -133,7 +149,7 @@ func VerifyToken(t string) (*jwt.Token, error) {
 }
 
 func generatePassword(password string) string {
-	hash := sha1.New()
+	hash := sha256.New()
 	hash.Write([]byte(password))
 
 	return fmt.Sprintf("%x", hash.Sum([]byte(viper.GetString("SALT_FOR_GENERATE_PASSWORD"))))

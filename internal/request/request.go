@@ -1,3 +1,4 @@
+// Package request qwe
 package request
 
 import (
@@ -9,10 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// CustomValidator struct init
 type CustomValidator struct {
 	Validator *validator.Validate
 }
 
+// Validate func provides validation
 func (c *CustomValidator) Validate(i interface{}) error {
 	if err := c.Validator.Struct(i); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -20,7 +23,8 @@ func (c *CustomValidator) Validate(i interface{}) error {
 	return nil
 }
 
-type RequestCatId struct {
+// CatID struct init
+type CatID struct {
 	ID   uuid.UUID `json:"id" bson:"id"`
 	Name string    `json:"name" bson:"name"`
 }

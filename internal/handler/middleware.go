@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Restricted provides access to hidden page for authorized users
 // @Summary Restricted
 // @Security ApiKeyAuth
 // @Description example closed page

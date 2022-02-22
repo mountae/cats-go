@@ -1,3 +1,4 @@
+// Package handler provides work with requests
 package handler
 
 import (
@@ -9,14 +10,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// UserAuthHandler init
 type UserAuthHandler struct {
 	src service.Auth
 }
 
+// NewUserAuthHandler creation
 func NewUserAuthHandler(src service.Auth) *UserAuthHandler {
 	return &UserAuthHandler{src: src}
 }
 
+// SignUp provides logic for register user
 // @Summary SignUp
 // @Tags auth
 // @Description decode params and send it in service for create account
@@ -47,19 +51,24 @@ func (h *UserAuthHandler) SignUp(c echo.Context) error {
 	return c.JSON(http.StatusOK, id)
 }
 
+// SignInInput struct init
 type SignInInput struct {
 	Username string `json:"username" validate:"required,min=3"`
 	Password string `json:"password" validate:"required,min=6"`
 }
+
+// TokenResponse struct init
 type TokenResponse struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
 
+// RefreshTokenRequest struct init
 type RefreshTokenRequest struct {
 	Token string `json:"Token"`
 }
 
+// SignIn provides logic for login user
 // @Summary SignIn
 // @Tags auth
 // @Description decode params and send them in service for generate token
@@ -90,6 +99,7 @@ func (h *UserAuthHandler) SignIn(c echo.Context) error {
 	return c.JSON(http.StatusOK, a)
 }
 
+// UpdateTokens provides logic for update users tokens
 // @Summary UpdateTokens
 // @Tags auth
 // @Description update access and refresh token pair
@@ -101,16 +111,16 @@ func (h *UserAuthHandler) SignIn(c echo.Context) error {
 // @Failure 500 {object} models.User
 // @Router /token [post]
 func (h *UserAuthHandler) UpdateTokens(c echo.Context) error {
-	var t_input RefreshTokenRequest
+	var tInput RefreshTokenRequest
 
-	err := json.NewDecoder(c.Request().Body).Decode(&t_input)
+	err := json.NewDecoder(c.Request().Body).Decode(&tInput)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.User))
 	}
-	if err = c.Validate(t_input); err != nil {
+	if err = c.Validate(tInput); err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.User))
 	}
-	ntoken, nrefToken, err := h.src.RefreshTokens(t_input.Token)
+	ntoken, nrefToken, err := h.src.RefreshTokens(tInput.Token)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}

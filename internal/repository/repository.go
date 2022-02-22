@@ -1,9 +1,11 @@
+// Package repository encapsulate work with database
 package repository
 
 import (
 	"CatsGo/internal/models"
 	"context"
 	"errors"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/gommon/log"
@@ -13,14 +15,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// PostgresRepository init pgsql
 type PostgresRepository struct {
 	conn *pgxpool.Pool
 }
 
+// MongoRepository init mongodb
 type MongoRepository struct {
 	client *mongo.Client
 }
 
+// Repository contains methods for work with cats collection
 type Repository interface {
 	GetAllCats() ([]*models.Cats, error)
 	CreateCat(cats models.Cats) (*models.Cats, error)
@@ -29,14 +34,17 @@ type Repository interface {
 	DeleteCat(id uuid.UUID) error
 }
 
+// NewPostgresRepository creates new cats repository
 func NewPostgresRepository(conn *pgxpool.Pool) *PostgresRepository {
 	return &PostgresRepository{conn: conn}
 }
 
+// NewMongoRepository creates new cats repository
 func NewMongoRepository(client *mongo.Client) *MongoRepository {
 	return &MongoRepository{client: client}
 }
 
+// GetAllCats provides request to get all cats from pgdb
 func (c *PostgresRepository) GetAllCats() ([]*models.Cats, error) {
 	var allcats []*models.Cats
 
@@ -56,6 +64,7 @@ func (c *PostgresRepository) GetAllCats() ([]*models.Cats, error) {
 	return allcats, nil
 }
 
+// CreateCat provides request to create new cat in pgdb
 func (c *PostgresRepository) CreateCat(cat models.Cats) (*models.Cats, error) {
 	cat.ID = uuid.New()
 	result, err := c.conn.Exec(context.Background(), "INSERT INTO cats VALUES ($1, $2)", cat.ID, cat.Name)
@@ -68,6 +77,7 @@ func (c *PostgresRepository) CreateCat(cat models.Cats) (*models.Cats, error) {
 	return &cat, nil
 }
 
+// GetCat provides request to get cat by 'id' from pgdb
 func (c *PostgresRepository) GetCat(id uuid.UUID) *models.Cats {
 	var cat models.Cats
 
@@ -79,6 +89,7 @@ func (c *PostgresRepository) GetCat(id uuid.UUID) *models.Cats {
 	return &cat
 }
 
+// UpdateCat provides request to update cat by 'id' in pgdb
 func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
 	result, err := c.conn.Exec(context.Background(), "UPDATE cats SET name = $1 WHERE id = $2", cats.Name, id)
 	if err != nil {
@@ -90,6 +101,7 @@ func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.
 	return &cats, nil
 }
 
+// DeleteCat provides request to delete cat by 'id' from pgdb
 func (c *PostgresRepository) DeleteCat(id uuid.UUID) error {
 	_, err := c.conn.Exec(context.Background(), "DELETE FROM cats WHERE id=$1", id)
 	if err != nil {
@@ -98,6 +110,7 @@ func (c *PostgresRepository) DeleteCat(id uuid.UUID) error {
 	return nil
 }
 
+// GetAllCats provides request to get all cats from mongodb
 func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
 	var allcats = []*models.Cats{}
 
@@ -115,6 +128,7 @@ func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
 	return allcats, nil
 }
 
+// CreateCat provides request to create cat in mongodb
 func (c *MongoRepository) CreateCat(cats models.Cats) (*models.Cats, error) {
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
 	docs := []interface{}{
@@ -127,6 +141,7 @@ func (c *MongoRepository) CreateCat(cats models.Cats) (*models.Cats, error) {
 	return &cats, nil
 }
 
+// GetCat provides request to get cat by 'id' from mongodb
 func (c *MongoRepository) GetCat(id uuid.UUID) *models.Cats {
 	var cat models.Cats
 
@@ -138,6 +153,7 @@ func (c *MongoRepository) GetCat(id uuid.UUID) *models.Cats {
 	return &cat
 }
 
+// UpdateCat provides request to update cat by 'id' in mongodb
 func (c *MongoRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
 	filter := bson.D{primitive.E{Key: "id", Value: cats.ID}}
@@ -149,6 +165,7 @@ func (c *MongoRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cat
 	return &cats, nil
 }
 
+// DeleteCat provides request to delete cat by 'id' from mongodb
 func (c *MongoRepository) DeleteCat(id uuid.UUID) error {
 	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
 	_, err := collection.DeleteOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: id}})

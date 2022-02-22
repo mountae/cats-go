@@ -11,14 +11,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+// RequestDB provides connection to Postgres database
 func RequestDB() *pgxpool.Pool {
 	if err := initConfig(); err != nil {
 		log.Fatal("postgres error with config files")
 	}
-
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatal("postgres error loading env variables")
-	// }
 
 	url := fmt.Sprintf("%s://%s:%s@%s:%s/%s",
 		viper.GetString("db.pos"),

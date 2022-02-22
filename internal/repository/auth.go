@@ -11,11 +11,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// Auth interface init
 type Auth interface {
 	CreateUser(user models.User) (models.User, error)
 	GetUser(username, password string) (models.User, error)
 }
 
+// CreateUser creates new user in pgdb
 func (c *PostgresRepository) CreateUser(user models.User) (models.User, error) {
 	var userData models.User
 
@@ -31,6 +33,7 @@ func (c *PostgresRepository) CreateUser(user models.User) (models.User, error) {
 	return userData, nil
 }
 
+// GetUser get user from pgdb
 func (c *PostgresRepository) GetUser(username, password string) (models.User, error) {
 	var user models.User
 
@@ -38,16 +41,17 @@ func (c *PostgresRepository) GetUser(username, password string) (models.User, er
 		"FROM users WHERE username = $1", username).Scan(&user.ID, &user.Name, &user.Username, &user.Password)
 
 	if err != nil {
-		return *new(models.User), errors.New("user not in database")
+		return models.User{}, errors.New("user not in database")
 	}
 
 	if user.Password != password {
-		return *new(models.User), errors.New("incorrect password")
+		return models.User{}, errors.New("incorrect password")
 	}
 
 	return user, nil
 }
 
+// CreateUser creates new user in mongodb
 func (c *MongoRepository) CreateUser(user models.User) (models.User, error) {
 	collection := c.client.Database("users").Collection("users")
 
@@ -64,6 +68,7 @@ func (c *MongoRepository) CreateUser(user models.User) (models.User, error) {
 	return models.User{}, nil
 }
 
+// GetUser get user from mongodb
 func (c *MongoRepository) GetUser(username, password string) (models.User, error) {
-	return *new(models.User), nil
+	return models.User{}, nil
 }

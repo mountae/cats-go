@@ -229,12 +229,12 @@ paths:
       - application/json
       description: update access and refresh token pair
       parameters:
-      - description: t_input
+      - description: tInput
         in: body
-        name: t_input
+        name: tInput
         required: true
         schema:
-          $ref: '#/definitions/handler.TokenResponce'
+          $ref: '#/definitions/handler.RefreshTokenRequest'
       produces:
       - application/json
       responses:

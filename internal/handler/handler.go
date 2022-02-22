@@ -1,3 +1,4 @@
+// Package handler encapsulates work with http
 package handler
 
 import (
@@ -10,14 +11,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// CatHandler init
 type CatHandler struct {
 	src service.Service
 }
 
+// NewCatHandler creation
 func NewCatHandler(srv service.Service) *CatHandler {
 	return &CatHandler{src: srv}
 }
 
+// GetAllCats fetches all entities from cats collection
 // @Summary GetAllCats
 // @Tags Cats
 // @Description collect all cats in array
@@ -32,6 +36,7 @@ func (h *CatHandler) GetAllCats(c echo.Context) error {
 	return c.JSON(http.StatusOK, allcats)
 }
 
+// CreateCat creates a new entity in cats collection
 // @Summary CreateCat
 // @Tags Cats
 // @Description create cat
@@ -57,6 +62,7 @@ func (h *CatHandler) CreateCat(c echo.Context) error {
 	return c.JSON(http.StatusCreated, cat)
 }
 
+// GetCat fetches a single cat from cat collection by 'id'
 // @Summary GetCat
 // @Tags Cats
 // @Description get cat by id
@@ -68,13 +74,13 @@ func (h *CatHandler) CreateCat(c echo.Context) error {
 // @Failure 500 {string} string
 // @Router /cats/{id} [get]
 func (h *CatHandler) GetCat(c echo.Context) error {
-
 	id, _ := uuid.Parse(c.Param("id"))
 	cat := h.src.GetCatServ(id)
 
 	return c.JSON(http.StatusOK, cat)
 }
 
+// UpdateCat updates a single cat in cats collection by 'id'
 // @Summary UpdateCat
 // @Tags Cats
 // @Description update cat by id
@@ -98,6 +104,7 @@ func (h *CatHandler) UpdateCat(c echo.Context) error {
 	return c.JSON(http.StatusOK, cat)
 }
 
+// DeleteCat deletes a single cat from cats collection by 'id'
 // @Summary DeleteCat
 // @Tags Cats
 // @Description delete cat by id
@@ -109,7 +116,6 @@ func (h *CatHandler) UpdateCat(c echo.Context) error {
 // @Failure 500 {string} string
 // @Router /cats/{id} [delete]
 func (h *CatHandler) DeleteCat(c echo.Context) error {
-
 	id, _ := uuid.Parse(c.Param("id"))
 	err := h.src.DeleteCatServ(id)
 	if err != nil {
@@ -119,7 +125,8 @@ func (h *CatHandler) DeleteCat(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-type RequestCatId struct {
+// RequestCatID struct init
+type RequestCatID struct {
 	ID   uuid.UUID `json:"id" bson:"id"`
 	Name string    `json:"name" bson:"name"`
 }

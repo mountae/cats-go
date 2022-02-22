@@ -16,9 +16,6 @@ import (
 	_ "CatsGo/docs"
 )
 
-// 1 - postgres, 2 - mongodb
-const flag = 1
-
 // @title Cats Go
 // @version 1.0
 // @description This is a simple CRUD app for Go.
@@ -44,14 +41,15 @@ func main() {
 
 	var rps repository2.Repository
 	var rpsAuth repository2.Auth
-	if flag == 1 {
+	var flag = "postgres" // postgres, mongodb
+	if flag == "postgres" {
 		// postgres connect
 		conn := repository2.RequestDB()
 		defer conn.Close()
 
 		rps = repository2.NewPostgresRepository(conn)
 		rpsAuth = repository2.NewPostgresRepository(conn)
-	} else if flag == 2 {
+	} else if flag == "mongodb" {
 		// mongodb connect
 		client, cancel := repository2.RequestMongo()
 		defer cancel()
