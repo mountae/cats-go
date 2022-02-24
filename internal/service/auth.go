@@ -2,6 +2,7 @@
 package service
 
 import (
+	"CatsGo/internal/configs"
 	"CatsGo/internal/models"
 	"CatsGo/internal/repository"
 	"crypto/sha256"
@@ -11,27 +12,27 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 )
 
-// UserAuthService linking repo
+// UserAuthService implements an interface of Auth from repository
 type UserAuthService struct {
 	repository repository.Auth
+	cfg        *configs.Config
 }
 
-// Auth contains logic for auth cases
+// Auth contains methods for auth cases
 type Auth interface {
 	CreateUserServ(user models.User) (models.User, error)
 	GenerateToken(username string, password string) (t string, rt string, err error)
 	RefreshTokens(rt string) (nt, nrt string, err error)
 }
 
-// NewUserAuthService creation
-func NewUserAuthService(r repository.Auth) *UserAuthService {
-	return &UserAuthService{repository: r}
+// NewUserAuthService is a constructor
+func NewUserAuthService(r repository.Auth, cfg configs.Config) *UserAuthService {
+	return &UserAuthService{repository: r, cfg: &cfg}
 }
 
-// JwtCustomClaims struct init
+// JwtCustomClaims expands the jwt.StandardClaims
 type JwtCustomClaims struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
@@ -40,7 +41,7 @@ type JwtCustomClaims struct {
 
 // CreateUserServ provides new service for user
 func (s *UserAuthService) CreateUserServ(user models.User) (models.User, error) {
-	user.Password = generatePassword(user.Password)
+	user.Password = generatePassword(user.Password, s.cfg)
 	return s.repository.CreateUser(user)
 }
 
@@ -51,7 +52,7 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 		rtt = 1
 	)
 
-	user, err := s.repository.GetUser(username, generatePassword(password))
+	user, err := s.repository.GetUser(username, generatePassword(password, s.cfg))
 	if err != nil {
 		return "", "", errors.New("error with generate token in repository")
 	}
@@ -67,7 +68,7 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, ac)
 
 	// Generate encoded token and send it as response.
-	t, err = token.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	t, err = token.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
 		return "", "", errors.New("error during generate token")
 	}
@@ -81,7 +82,7 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 
 	refToken := jwt.NewWithClaims(jwt.SigningMethodHS256, rfc)
 
-	rt, err = refToken.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	rt, err = refToken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
 		return "", "", errors.New("error during generate refresh token")
 	}
@@ -95,7 +96,7 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 		natt = 30
 		nrtt = 3
 	)
-	verifyResult, err := VerifyToken(rt)
+	verifyResult, err := VerifyToken(rt, s.cfg) // s.cfg hz
 
 	if verifyResult == nil {
 		return "", "", err
@@ -108,7 +109,7 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 
 	ntoken := jwt.NewWithClaims(jwt.SigningMethodHS256, ncl)
 
-	nt, err = ntoken.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	nt, err = ntoken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
 		return "", "", errors.New("error during generate new token")
 	}
@@ -121,7 +122,7 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 
 	nrefToken := jwt.NewWithClaims(jwt.SigningMethodHS256, nrfc)
 
-	nrt, err = nrefToken.SignedString([]byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")))
+	nrt, err = nrefToken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
 		return "", "", errors.New("error during generate new refresh token")
 	}
@@ -129,13 +130,13 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 }
 
 // VerifyToken func does validation for entered tokens
-func VerifyToken(t string) (*jwt.Token, error) {
+func VerifyToken(t string, cfg *configs.Config) (*jwt.Token, error) {
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		// Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(viper.GetString("KEY_FOR_SIGNATURE_JWT")), nil
+		return []byte(cfg.KeyForSignatureJwt), nil
 	})
 	if _, ok := token.Claims.(jwt.StandardClaims); !ok && !token.Valid {
 		return nil, err
@@ -148,9 +149,10 @@ func VerifyToken(t string) (*jwt.Token, error) {
 	return token, nil
 }
 
-func generatePassword(password string) string {
+func generatePassword(password string, cfg *configs.Config) string {
 	hash := sha256.New()
 	hash.Write([]byte(password))
 
-	return fmt.Sprintf("%x", hash.Sum([]byte(viper.GetString("SALT_FOR_GENERATE_PASSWORD"))))
+	// return fmt.Sprintf("%x", hash.Sum([]byte(viper.GetString("SALT_FOR_GENERATE_PASSWORD"))))
+	return fmt.Sprintf("%x", hash.Sum([]byte(cfg.Salt)))
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// CustomValidator struct init
+// CustomValidator replace default Echo validator
 type CustomValidator struct {
 	Validator *validator.Validate
 }
@@ -23,7 +23,7 @@ func (c *CustomValidator) Validate(i interface{}) error {
 	return nil
 }
 
-// CatID struct init
+// CatID RequestCatID gets id
 type CatID struct {
 	ID   uuid.UUID `json:"id" bson:"id"`
 	Name string    `json:"name" bson:"name"`

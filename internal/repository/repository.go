@@ -2,14 +2,15 @@
 package repository
 
 import (
+	"CatsGo/internal/configs"
 	"CatsGo/internal/models"
+
 	"context"
 	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/gommon/log"
-	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,6 +24,7 @@ type PostgresRepository struct {
 // MongoRepository init mongodb
 type MongoRepository struct {
 	client *mongo.Client
+	cfg    *configs.Config
 }
 
 // Repository contains methods for work with cats collection
@@ -40,8 +42,8 @@ func NewPostgresRepository(conn *pgxpool.Pool) *PostgresRepository {
 }
 
 // NewMongoRepository creates new cats repository
-func NewMongoRepository(client *mongo.Client) *MongoRepository {
-	return &MongoRepository{client: client}
+func NewMongoRepository(client *mongo.Client, cfg configs.Config) *MongoRepository {
+	return &MongoRepository{client: client, cfg: &cfg}
 }
 
 // GetAllCats provides request to get all cats from pgdb
@@ -114,7 +116,8 @@ func (c *PostgresRepository) DeleteCat(id uuid.UUID) error {
 func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
 	var allcats = []*models.Cats{}
 
-	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	// collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	collection := c.client.Database(c.cfg.MongoDBName).Collection(c.cfg.MongoCollection)
 	cur, currErr := collection.Find(context.TODO(), bson.D{})
 	if currErr != nil {
 		panic(currErr)
@@ -130,7 +133,8 @@ func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
 
 // CreateCat provides request to create cat in mongodb
 func (c *MongoRepository) CreateCat(cats models.Cats) (*models.Cats, error) {
-	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	// collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	collection := c.client.Database(c.cfg.MongoDBName).Collection(c.cfg.MongoCollection)
 	docs := []interface{}{
 		bson.D{primitive.E{Key: "id", Value: cats.ID}, {Key: "name", Value: cats.Name}},
 	}
@@ -145,7 +149,8 @@ func (c *MongoRepository) CreateCat(cats models.Cats) (*models.Cats, error) {
 func (c *MongoRepository) GetCat(id uuid.UUID) *models.Cats {
 	var cat models.Cats
 
-	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	// collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	collection := c.client.Database(c.cfg.MongoDBName).Collection(c.cfg.MongoCollection)
 	err := collection.FindOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: cat.ID}}).Decode(&cat)
 	if err != nil {
 		return nil
@@ -155,7 +160,8 @@ func (c *MongoRepository) GetCat(id uuid.UUID) *models.Cats {
 
 // UpdateCat provides request to update cat by 'id' in mongodb
 func (c *MongoRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
-	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	// collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	collection := c.client.Database(c.cfg.MongoDBName).Collection(c.cfg.MongoCollection)
 	filter := bson.D{primitive.E{Key: "id", Value: cats.ID}}
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "name", Value: cats.Name}}}}
 	_, err := collection.UpdateOne(context.TODO(), filter, update)
@@ -167,7 +173,8 @@ func (c *MongoRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cat
 
 // DeleteCat provides request to delete cat by 'id' from mongodb
 func (c *MongoRepository) DeleteCat(id uuid.UUID) error {
-	collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	// collection := c.client.Database(viper.GetString("mongodb.dbase")).Collection(viper.GetString("mongodb.collection"))
+	collection := c.client.Database(c.cfg.MongoDBName).Collection(c.cfg.MongoCollection)
 	_, err := collection.DeleteOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: id}})
 	if err != nil {
 		log.Fatal(err)
