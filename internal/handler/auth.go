@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 )
 
 // UserAuthHandler init
@@ -53,19 +54,19 @@ func (h *UserAuthHandler) SignUp(c echo.Context) error {
 
 // SignInInput struct init
 type SignInInput struct {
-	Username string `json:"username" validate:"required,min=3"`
-	Password string `json:"password" validate:"required,min=6"`
+	Username string `json:"username" validate:"required,lowercase,min=4"`
+	Password string `json:"password" validate:"required,max=20,min=6"`
 }
 
 // TokenResponse struct init
 type TokenResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	AccessToken  string `json:"accessToken" validate:"required,jwt"`
+	RefreshToken string `json:"refreshToken" validate:"required,jwt"`
 }
 
 // RefreshTokenRequest struct init
 type RefreshTokenRequest struct {
-	Token string `json:"Token"`
+	Token string `json:"Token" validate:"required,jwt"`
 }
 
 // SignIn provides logic for login user
@@ -93,6 +94,7 @@ func (h *UserAuthHandler) SignIn(c echo.Context) error {
 
 	token, refToken, err := h.src.GenerateToken(input.Username, input.Password)
 	if err != nil {
+		log.Error(err)
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	a := TokenResponse{AccessToken: token, RefreshToken: refToken}
@@ -122,6 +124,7 @@ func (h *UserAuthHandler) UpdateTokens(c echo.Context) error {
 	}
 	ntoken, nrefToken, err := h.src.RefreshTokens(tInput.Token)
 	if err != nil {
+		log.Error(err)
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	b := TokenResponse{AccessToken: ntoken, RefreshToken: nrefToken}

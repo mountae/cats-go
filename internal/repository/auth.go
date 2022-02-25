@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -27,6 +27,7 @@ func (c *PostgresRepository) CreateUser(user models.User) (models.User, error) {
 		id, user.Name, user.Username, user.Password)
 	err := row.Scan(&userData.ID, &userData.Name, &userData.Username)
 	if err != nil {
+		log.Error(err)
 		return userData, errors.New("error when adding to the database")
 	}
 
@@ -41,6 +42,7 @@ func (c *PostgresRepository) GetUser(username, password string) (models.User, er
 		"FROM users WHERE username = $1", username).Scan(&user.ID, &user.Name, &user.Username, &user.Password)
 
 	if err != nil {
+		log.Error(err)
 		return models.User{}, errors.New("user not in database")
 	}
 

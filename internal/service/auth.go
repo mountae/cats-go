@@ -6,12 +6,12 @@ import (
 	"CatsGo/internal/models"
 	"CatsGo/internal/repository"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/labstack/gommon/log"
 )
 
 // UserAuthService implements an interface of Auth from repository
@@ -54,7 +54,8 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 
 	user, err := s.repository.GetUser(username, generatePassword(password, s.cfg))
 	if err != nil {
-		return "", "", errors.New("error with generate token in repository")
+		log.Error("error with generate token in repository")
+		return "", "", err
 	}
 
 	ac := &JwtCustomClaims{
@@ -70,7 +71,8 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 	// Generate encoded token and send it as response.
 	t, err = token.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
-		return "", "", errors.New("error during generate token")
+		log.Error("error during generate token")
+		return "", "", err
 	}
 
 	rfc := &JwtCustomClaims{
@@ -84,7 +86,8 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 
 	rt, err = refToken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
-		return "", "", errors.New("error during generate refresh token")
+		log.Error("error during generate refresh token")
+		return "", "", err
 	}
 
 	return t, rt, nil
@@ -99,6 +102,7 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 	verifyResult, err := VerifyToken(rt, s.cfg) // s.cfg hz
 
 	if verifyResult == nil {
+		log.Error("Token not verified")
 		return "", "", err
 	}
 	ncl := &JwtCustomClaims{
@@ -111,7 +115,8 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 
 	nt, err = ntoken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
-		return "", "", errors.New("error during generate new token")
+		log.Error("error during generate new token")
+		return "", "", err
 	}
 
 	nrfc := &JwtCustomClaims{
@@ -124,7 +129,8 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 
 	nrt, err = nrefToken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
 	if err != nil {
-		return "", "", errors.New("error during generate new refresh token")
+		log.Error("error during generate new refresh token")
+		return "", "", err
 	}
 	return nt, nrt, nil
 }
@@ -143,6 +149,7 @@ func VerifyToken(t string, cfg *configs.Config) (*jwt.Token, error) {
 	}
 
 	if err != nil {
+		log.Error("error while verify token")
 		return nil, err
 	}
 

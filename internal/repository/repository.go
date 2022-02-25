@@ -6,11 +6,10 @@ import (
 	"CatsGo/internal/models"
 
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -52,12 +51,13 @@ func (c *PostgresRepository) GetAllCats() ([]*models.Cats, error) {
 
 	rows, err := c.conn.Query(context.Background(), "SELECT id, name FROM cats")
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 	for rows.Next() {
 		var cat models.Cats
 
 		if err := rows.Scan(&cat.ID, &cat.Name); err != nil {
+			log.Error("Failed to return all cats from database")
 			return nil, err
 		}
 
@@ -71,10 +71,12 @@ func (c *PostgresRepository) CreateCat(cat models.Cats) (*models.Cats, error) {
 	cat.ID = uuid.New()
 	result, err := c.conn.Exec(context.Background(), "INSERT INTO cats VALUES ($1, $2)", cat.ID, cat.Name)
 	if err != nil {
+		log.Error(err)
 		return &cat, err
 	}
 	if result.RowsAffected() != 1 {
-		return &cat, errors.New("failed to create a cat")
+		log.Error("failed to create a cat")
+		return &cat, err
 	}
 	return &cat, nil
 }
@@ -86,6 +88,7 @@ func (c *PostgresRepository) GetCat(id uuid.UUID) *models.Cats {
 	result := c.conn.QueryRow(context.Background(), "SELECT * FROM cats WHERE id=$1", id)
 	err := result.Scan(&cat.ID, &cat.Name)
 	if err != nil {
+		log.Error(err)
 		return nil
 	}
 	return &cat
@@ -95,10 +98,12 @@ func (c *PostgresRepository) GetCat(id uuid.UUID) *models.Cats {
 func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error) {
 	result, err := c.conn.Exec(context.Background(), "UPDATE cats SET name = $1 WHERE id = $2", cats.Name, id)
 	if err != nil {
+		log.Error(err)
 		return &cats, err
 	}
 	if result.RowsAffected() != 1 {
-		return &cats, errors.New("row isn't updated")
+		log.Error("row isn't updated")
+		return &cats, err // TODO: fix error 200 when not valid id
 	}
 	return &cats, nil
 }
@@ -107,7 +112,8 @@ func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.
 func (c *PostgresRepository) DeleteCat(id uuid.UUID) error {
 	_, err := c.conn.Exec(context.Background(), "DELETE FROM cats WHERE id=$1", id)
 	if err != nil {
-		return errors.New("error while deleting cat")
+		log.Error("error while deleting a cat")
+		return err
 	}
 	return nil
 }

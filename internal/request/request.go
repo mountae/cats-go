@@ -26,5 +26,5 @@ func (c *CustomValidator) Validate(i interface{}) error {
 // CatID RequestCatID gets id
 type CatID struct {
 	ID   uuid.UUID `json:"id" bson:"id"`
-	Name string    `json:"name" bson:"name"`
+	Name string    `json:"name" bson:"name" validate:"required,min=4"`
 }

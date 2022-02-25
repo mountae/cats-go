@@ -4,11 +4,11 @@ package handler
 import (
 	"CatsGo/internal/models"
 	"CatsGo/internal/service"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 )
 
 // CatHandler init
@@ -31,6 +31,7 @@ func NewCatHandler(srv service.Service) *CatHandler {
 func (h *CatHandler) GetAllCats(c echo.Context) error {
 	allcats, err := h.src.GetAllCatsServ()
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 	return c.JSON(http.StatusOK, allcats)
@@ -57,6 +58,7 @@ func (h *CatHandler) CreateCat(c echo.Context) error {
 
 	cat, err := h.src.CreateCatServ(*cats)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 	return c.JSON(http.StatusCreated, cat)
@@ -94,11 +96,18 @@ func (h *CatHandler) GetCat(c echo.Context) error {
 // @Router /cats/{id} [put]
 func (h *CatHandler) UpdateCat(c echo.Context) error {
 	cats := new(models.Cats)
-	er := c.Bind(cats)
-	fmt.Println(er)
+	if err := c.Bind(cats); err != nil {
+		return c.JSON(http.StatusBadRequest, new(models.Cats))
+	}
+	// er := c.Bind(cats)
+	// fmt.Println(er)
+	if err := c.Validate(cats); err != nil {
+		return c.JSON(http.StatusBadRequest, new(models.Cats))
+	}
 	id, _ := uuid.Parse(c.Param("id"))
 	cat, err := h.src.UpdateCatServ(id, *cats)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 	return c.JSON(http.StatusOK, cat)
@@ -119,6 +128,7 @@ func (h *CatHandler) DeleteCat(c echo.Context) error {
 	id, _ := uuid.Parse(c.Param("id"))
 	err := h.src.DeleteCatServ(id)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 

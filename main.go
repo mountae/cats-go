@@ -8,11 +8,12 @@ import (
 	"CatsGo/internal/service"
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -24,7 +25,8 @@ import (
 )
 
 const (
-	flag = "postgres" // postgres / mongodb
+	flag     = "postgres" // postgres / mongodb
+	portEcho = ":8000"
 )
 
 // @title Cats Go
@@ -103,7 +105,7 @@ func main() {
 	}
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
-	e.Logger.Fatal(e.Start(cfg.Port))
+	e.Logger.Fatal(e.Start(portEcho))
 }
 
 // NewPgxPool provides connection with postgres database
