@@ -160,6 +160,5 @@ func generatePassword(password string, cfg *configs.Config) string {
 	hash := sha256.New()
 	hash.Write([]byte(password))
 
-	// return fmt.Sprintf("%x", hash.Sum([]byte(viper.GetString("SALT_FOR_GENERATE_PASSWORD"))))
 	return fmt.Sprintf("%x", hash.Sum([]byte(cfg.Salt)))
 }

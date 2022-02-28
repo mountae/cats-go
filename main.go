@@ -8,7 +8,10 @@ import (
 	"CatsGo/internal/service"
 	"context"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -27,6 +30,7 @@ import (
 const (
 	flag     = "postgres" // postgres / mongodb
 	portEcho = ":8000"
+	dir      = "files/media/"
 )
 
 // @title Cats Go
@@ -104,6 +108,57 @@ func main() {
 		r.GET("", hndlrAuth.Restricted)
 	}
 
+	// Download file
+	e.GET("/download", func(c echo.Context) error {
+		return c.File("files/template/download.html")
+	})
+	e.GET("/download/file", func(c echo.Context) error {
+		return c.Attachment("files/media/gopl.jpg", "new-gopl.jpg")
+	})
+
+	// Upload file
+	e.GET("/upload", func(c echo.Context) error {
+		return c.File("files/template/upload.html")
+	})
+	e.POST("/upload", func(c echo.Context) error {
+		name := c.FormValue("name")
+
+		// Source
+		file, err := c.FormFile("file")
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		src, err := file.Open()
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		defer func(src multipart.File) {
+			err = src.Close()
+		}(src)
+
+		// Destination
+		dst, err := os.Create(dir + file.Filename)
+		if err != nil {
+			log.Error("error while creating file")
+			return err
+		}
+		defer func(dst *os.File) {
+			err = dst.Close()
+			if err != nil {
+				log.Error("destination close file error")
+			}
+		}(dst)
+
+		// Copy the uploaded file to the created file on the filesystem
+		if _, err = io.Copy(dst, src); err != nil {
+			log.Error("error while copy file")
+			return err
+		}
+		return c.HTML(http.StatusOK, fmt.Sprintf("<p>File %s uploaded successfully with field name='%s' and size='%d' bytes.</p>", file.Filename, name, file.Size))
+	})
+
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	e.Logger.Fatal(e.Start(portEcho))
 }
@@ -124,7 +179,6 @@ func NewPgxPool(ctx context.Context, cfg configs.Config) (*pgxpool.Pool, error) 
 		cfg.PgDBName)
 
 	conn, err := pgxpool.Connect(ctx, url)
-	fmt.Println(url) //TODO: fix binding cfg env vars
 	if err != nil {
 		log.Errorf("Unable to connect to postgres database: %v\n", err)
 		return nil, fmt.Errorf("we can't connect to database")

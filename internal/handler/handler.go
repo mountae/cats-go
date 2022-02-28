@@ -99,8 +99,6 @@ func (h *CatHandler) UpdateCat(c echo.Context) error {
 	if err := c.Bind(cats); err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.Cats))
 	}
-	// er := c.Bind(cats)
-	// fmt.Println(er)
 	if err := c.Validate(cats); err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.Cats))
 	}
@@ -108,7 +106,7 @@ func (h *CatHandler) UpdateCat(c echo.Context) error {
 	cat, err := h.src.UpdateCatServ(id, *cats)
 	if err != nil {
 		log.Error(err)
-		return err
+		return c.JSON(http.StatusBadRequest, err.Error()) // err
 	}
 	return c.JSON(http.StatusOK, cat)
 }
@@ -131,7 +129,6 @@ func (h *CatHandler) DeleteCat(c echo.Context) error {
 		log.Error(err)
 		return err
 	}
-
 	return c.JSON(http.StatusOK, nil)
 }
 
