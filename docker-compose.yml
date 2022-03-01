@@ -5,6 +5,7 @@ services:
     depends_on:
       - pg
       - mongo
+      - redis
     build: ./
     command: ./cats-go-docker
     ports:
@@ -50,6 +51,13 @@ services:
       - mynet
     volumes:
       - roach:/data/db
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - mynet
 
 volumes:
   roach:

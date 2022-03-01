@@ -14,6 +14,13 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
+const (
+	att  = 15 // access token time
+	rtt  = 1  // refresh token time
+	natt = 30 // new access token time
+	nrtt = 3  // new refresh token time
+)
+
 // UserAuthService implements an interface of Auth from repository
 type UserAuthService struct {
 	repository repository.Auth
@@ -23,13 +30,13 @@ type UserAuthService struct {
 // Auth contains methods for auth cases
 type Auth interface {
 	CreateUserServ(user models.User) (models.User, error)
-	GenerateToken(username string, password string) (t string, rt string, err error)
+	GenerateToken(username, password string) (t, rt string, err error)
 	RefreshTokens(rt string) (nt, nrt string, err error)
 }
 
 // NewUserAuthService is a constructor
-func NewUserAuthService(r repository.Auth, cfg configs.Config) *UserAuthService {
-	return &UserAuthService{repository: r, cfg: &cfg}
+func NewUserAuthService(r repository.Auth, cfg *configs.Config) *UserAuthService {
+	return &UserAuthService{repository: r, cfg: cfg}
 }
 
 // JwtCustomClaims expands the jwt.StandardClaims
@@ -47,11 +54,6 @@ func (s *UserAuthService) CreateUserServ(user models.User) (models.User, error) 
 
 // GenerateToken func creates a pair of jwt tokens
 func (s *UserAuthService) GenerateToken(username, password string) (t, rt string, err error) {
-	const (
-		att = 15
-		rtt = 1
-	)
-
 	user, err := s.repository.GetUser(username, generatePassword(password, s.cfg))
 	if err != nil {
 		log.Error("error with generate token in repository")
@@ -65,7 +67,6 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 			ExpiresAt: time.Now().Add(time.Minute * att).Unix(),
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, ac)
 
 	// Generate encoded token and send it as response.
@@ -81,7 +82,6 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 			ExpiresAt: time.Now().Add(time.Hour * rtt).Unix(),
 		},
 	}
-
 	refToken := jwt.NewWithClaims(jwt.SigningMethodHS256, rfc)
 
 	rt, err = refToken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
@@ -95,14 +95,10 @@ func (s *UserAuthService) GenerateToken(username, password string) (t, rt string
 
 // RefreshTokens func provides force update a pair of tokens
 func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
-	const (
-		natt = 30
-		nrtt = 3
-	)
-	verifyResult, err := VerifyToken(rt, s.cfg) // s.cfg hz
+	verifyResult, err := VerifyToken(rt, s.cfg)
 
 	if verifyResult == nil {
-		log.Error("Token not verified")
+		log.Error("token not verified")
 		return "", "", err
 	}
 	ncl := &JwtCustomClaims{
@@ -110,7 +106,6 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 			ExpiresAt: time.Now().Add(time.Minute * natt).Unix(),
 		},
 	}
-
 	ntoken := jwt.NewWithClaims(jwt.SigningMethodHS256, ncl)
 
 	nt, err = ntoken.SignedString([]byte(s.cfg.KeyForSignatureJwt))
@@ -124,7 +119,6 @@ func (s *UserAuthService) RefreshTokens(rt string) (nt, nrt string, err error) {
 			ExpiresAt: time.Now().Add(time.Hour * nrtt).Unix(),
 		},
 	}
-
 	nrefToken := jwt.NewWithClaims(jwt.SigningMethodHS256, nrfc)
 
 	nrt, err = nrefToken.SignedString([]byte(s.cfg.KeyForSignatureJwt))

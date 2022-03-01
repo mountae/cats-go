@@ -14,6 +14,9 @@ import (
 	"os"
 
 	"github.com/caarlos0/env/v6"
+
+	"github.com/go-redis/redis/v8"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -33,6 +36,53 @@ const (
 	dir      = "files/media/"
 )
 
+// NewPgxPool provides connection with postgres database
+func NewPgxPool(ctx context.Context, cfg *configs.Config) (*pgxpool.Pool, error) {
+	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		cfg.PgUser,
+		cfg.PgPassword,
+		cfg.PgHost,
+		cfg.PgPort,
+		cfg.PgDBName)
+	conn, cfgErr := pgxpool.Connect(ctx, url)
+	if cfgErr != nil {
+		log.Errorf("unable to connect to postgres database: %v\n", cfgErr)
+		return nil, fmt.Errorf("we can't connect to postgres database")
+	}
+	return conn, nil
+}
+
+// NewMongoClient provides connection with mongo database
+func NewMongoClient(ctx context.Context, cfg *configs.Config) (*mongo.Client, error) {
+	url := fmt.Sprintf("mongodb://%s:%s@%s:%s",
+		cfg.MongoUser,
+		cfg.MongoPassword,
+		cfg.MongoHost,
+		cfg.MongoPort)
+	client, err := mongo.NewClient(options.Client().ApplyURI(url))
+	if err != nil {
+		log.Error(err)
+		return nil, fmt.Errorf("we can't setup connection with mongo database")
+	}
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Errorf("unable to connect to mongo database: %v\n", err)
+		return nil, fmt.Errorf("we can't connect to mongo database")
+	}
+	return client, nil
+}
+
+// newRedisClient provides connection with redis
+func newRedisClient(cfg *configs.Config) (*redis.Client, error) {
+	rHostPort := cfg.RedisHost + ":" + cfg.RedisPort
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     rHostPort,
+		Password: cfg.RedisPassword, // no password set
+		DB:       cfg.RedisDBName,   // use default DB
+	})
+	return rdb, nil
+}
+
 // @title Cats Go
 // @version 1.0
 // @description This is a simple CRUD app for Go.
@@ -49,7 +99,11 @@ func main() {
 	e.Validator = &request.CustomValidator{Validator: validator.New()}
 
 	// Configuration
-	cfg := configs.Config{}
+	cfg := &configs.Config{}
+	opts := &env.Options{}
+	if err := env.Parse(cfg, *opts); err != nil {
+		log.Fatal(err)
+	}
 
 	// Middleware
 	e.Use(middleware.Logger())
@@ -147,7 +201,7 @@ func main() {
 		defer func(dst *os.File) {
 			err = dst.Close()
 			if err != nil {
-				log.Error("destination close file error")
+				log.Error("error with destination close file")
 			}
 		}(dst)
 
@@ -161,47 +215,4 @@ func main() {
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	e.Logger.Fatal(e.Start(portEcho))
-}
-
-// NewPgxPool provides connection with postgres database
-func NewPgxPool(ctx context.Context, cfg configs.Config) (*pgxpool.Pool, error) {
-	cfgErr := env.Parse(&cfg)
-	if cfgErr != nil {
-		log.Errorf("Unable to parse config: %v\n", cfgErr)
-		return nil, fmt.Errorf("we can't parse config")
-	}
-
-	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		cfg.PgUser,
-		cfg.PgPassword,
-		cfg.PgHost,
-		cfg.PgPort,
-		cfg.PgDBName)
-
-	conn, err := pgxpool.Connect(ctx, url)
-	if err != nil {
-		log.Errorf("Unable to connect to postgres database: %v\n", err)
-		return nil, fmt.Errorf("we can't connect to database")
-	}
-	return conn, nil
-}
-
-// NewMongoClient provides connection to mongodb database
-func NewMongoClient(ctx context.Context, cfg configs.Config) (*mongo.Client, error) {
-	url := fmt.Sprintf("mongodb://%s:%s@%s:%s",
-		cfg.MongoUser,
-		cfg.MongoPassword,
-		cfg.MongoHost,
-		cfg.MongoPort)
-	client, err := mongo.NewClient(options.Client().ApplyURI(url))
-	if err != nil {
-		log.Error(err)
-		return nil, fmt.Errorf("we can't connect to database")
-	}
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Errorf("Unable to connect to mongodb database: %v\n", err)
-		return nil, fmt.Errorf("we can't connect to database")
-	}
-	return client, nil
 }

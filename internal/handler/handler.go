@@ -55,7 +55,6 @@ func (h *CatHandler) CreateCat(c echo.Context) error {
 	if err := c.Validate(cats); err != nil {
 		return c.JSON(http.StatusBadRequest, new(models.Cats))
 	}
-
 	cat, err := h.src.CreateCatServ(*cats)
 	if err != nil {
 		log.Error(err)
@@ -77,8 +76,11 @@ func (h *CatHandler) CreateCat(c echo.Context) error {
 // @Router /cats/{id} [get]
 func (h *CatHandler) GetCat(c echo.Context) error {
 	id, _ := uuid.Parse(c.Param("id"))
-	cat := h.src.GetCatServ(id)
-
+	cat, err := h.src.GetCatServ(id)
+	if err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusNotFound, err.Error())
+	}
 	return c.JSON(http.StatusOK, cat)
 }
 
@@ -106,7 +108,7 @@ func (h *CatHandler) UpdateCat(c echo.Context) error {
 	cat, err := h.src.UpdateCatServ(id, *cats)
 	if err != nil {
 		log.Error(err)
-		return c.JSON(http.StatusBadRequest, err.Error()) // err
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 	return c.JSON(http.StatusOK, cat)
 }

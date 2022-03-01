@@ -31,7 +31,7 @@ type MongoRepository struct {
 type Repository interface {
 	GetAllCats() ([]*models.Cats, error)
 	CreateCat(cats models.Cats) (*models.Cats, error)
-	GetCat(id uuid.UUID) *models.Cats
+	GetCat(id uuid.UUID) (*models.Cats, error)
 	UpdateCat(id uuid.UUID, cats models.Cats) (*models.Cats, error)
 	DeleteCat(id uuid.UUID) error
 }
@@ -42,8 +42,8 @@ func NewPostgresRepository(conn *pgxpool.Pool) *PostgresRepository {
 }
 
 // NewMongoRepository creates new cats repository
-func NewMongoRepository(client *mongo.Client, cfg configs.Config) *MongoRepository {
-	return &MongoRepository{client: client, cfg: &cfg}
+func NewMongoRepository(client *mongo.Client, cfg *configs.Config) *MongoRepository {
+	return &MongoRepository{client: client, cfg: cfg}
 }
 
 // GetAllCats provides request to get all cats from pgdb
@@ -58,7 +58,7 @@ func (c *PostgresRepository) GetAllCats() ([]*models.Cats, error) {
 		var cat models.Cats
 
 		if err := rows.Scan(&cat.ID, &cat.Name); err != nil {
-			log.Error("Failed to return all cats from database")
+			log.Error("failed to return all cats from database")
 			return nil, err
 		}
 
@@ -83,16 +83,17 @@ func (c *PostgresRepository) CreateCat(cat models.Cats) (*models.Cats, error) {
 }
 
 // GetCat provides request to get cat by 'id' from pgdb
-func (c *PostgresRepository) GetCat(id uuid.UUID) *models.Cats {
+func (c *PostgresRepository) GetCat(id uuid.UUID) (*models.Cats, error) {
 	var cat models.Cats
 
 	result := c.conn.QueryRow(context.Background(), "SELECT * FROM cats WHERE id=$1", id)
 	err := result.Scan(&cat.ID, &cat.Name)
 	if err != nil {
 		log.Error(err)
-		return nil
+		err = errors.New("cat doesn't exist in database")
+		return nil, err
 	}
-	return &cat
+	return &cat, nil
 }
 
 // UpdateCat provides request to update cat by 'id' in pgdb
@@ -104,7 +105,7 @@ func (c *PostgresRepository) UpdateCat(id uuid.UUID, cats models.Cats) (*models.
 	}
 	if result.RowsAffected() != 1 {
 		log.Error("row isn't updated")
-		err = errors.New("error: cat was not found")
+		err = errors.New("cat doesn't exist in database")
 		return &cats, err
 	}
 	return &cats, nil
@@ -122,7 +123,7 @@ func (c *PostgresRepository) DeleteCat(id uuid.UUID) error {
 
 // GetAllCats provides request to get all cats from mongodb
 func (c *MongoRepository) GetAllCats() ([]*models.Cats, error) {
-	var allcats = []*models.Cats{}
+	var allcats []*models.Cats
 
 	collection := c.client.Database(c.cfg.MongoDBName).Collection(c.cfg.MongoCollection)
 	cur, currErr := collection.Find(context.TODO(), bson.D{})
@@ -152,15 +153,15 @@ func (c *MongoRepository) CreateCat(cats models.Cats) (*models.Cats, error) {
 }
 
 // GetCat provides request to get cat by 'id' from mongodb
-func (c *MongoRepository) GetCat(id uuid.UUID) *models.Cats {
+func (c *MongoRepository) GetCat(id uuid.UUID) (*models.Cats, error) {
 	var cat models.Cats
 
 	collection := c.client.Database(c.cfg.MongoDBName).Collection(c.cfg.MongoCollection)
 	err := collection.FindOne(context.TODO(), bson.D{primitive.E{Key: "id", Value: cat.ID}}).Decode(&cat)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return &cat
+	return &cat, nil
 }
 
 // UpdateCat provides request to update cat by 'id' in mongodb

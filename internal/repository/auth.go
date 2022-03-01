@@ -28,7 +28,7 @@ func (c *PostgresRepository) CreateUser(user models.User) (models.User, error) {
 	err := row.Scan(&userData.ID, &userData.Name, &userData.Username)
 	if err != nil {
 		log.Error(err)
-		return userData, errors.New("error when adding to the database")
+		return userData, errors.New("error while creating new user in database")
 	}
 
 	return userData, nil
@@ -43,7 +43,7 @@ func (c *PostgresRepository) GetUser(username, password string) (models.User, er
 
 	if err != nil {
 		log.Error(err)
-		return models.User{}, errors.New("user not in database")
+		return models.User{}, errors.New("user doesn't exist in database")
 	}
 
 	if user.Password != password {
