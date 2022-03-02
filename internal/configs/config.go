@@ -3,8 +3,6 @@ package configs
 
 // Config contains all env variables
 type Config struct {
-	Port string `env:"PORT" envDefault:":8000"`
-
 	PgUser     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	PgPassword string `env:"POSTGRES_PASSWORD" envDefault:"root"`
 	PgHost     string `env:"POSTGRES_HOST" envDefault:"localhost"`
@@ -19,12 +17,8 @@ type Config struct {
 	MongoDBName     string `env:"MONGO_DBNAME" envDefault:"mongodb"`
 	MongoCollection string `env:"MONGO_COLLECTION" envDefault:"mongocl"`
 
-	Redis         string `env:"REDIS_CONNSTRING" envDefault:"redis://<user>:<pass>@localhost:6379/<db>"`
-	RedisUser     string `env:"REDIS_USER" envDefault:""`
-	RedisPassword string `env:"REDIS_PASSWORD" envDefault:""`
-	RedisHost     string `env:"REDIS_HOST" envDefault:"localhost"`
-	RedisPort     string `env:"REDIS_PORT" envDefault:"6379"`
-	RedisDBName   int    `env:"REDIS_DBNAME" envDefault:"0"`
+	RedisHost string `env:"REDIS_HOST" envDefault:"localhost"`
+	RedisPort string `env:"REDIS_PORT" envDefault:"6379"`
 
 	KeyForSignatureJwt string `env:"KEY_FOR_SIGNATURE_JWT" envDefault:"mySecret"`
 	Salt               string `env:"SALT_FOR_GENERATE_PASSWORD" envDefault:"l337c0d3"`

@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 
@@ -72,13 +73,13 @@ func NewMongoClient(ctx context.Context, cfg *configs.Config) (*mongo.Client, er
 	return client, nil
 }
 
-// newRedisClient provides connection with redis
-func newRedisClient(cfg *configs.Config) (*redis.Client, error) {
+// NewRedisClient provides connection with redis
+func NewRedisClient(cfg *configs.Config) (*redis.Client, error) {
 	rHostPort := cfg.RedisHost + ":" + cfg.RedisPort
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     rHostPort,
-		Password: cfg.RedisPassword, // no password set
-		DB:       cfg.RedisDBName,   // use default DB
+		Password: "", // no password set
+		DB:       0,  // use default DB
 	})
 	return rdb, nil
 }
@@ -113,9 +114,15 @@ func main() {
 		return c.String(http.StatusOK, "Hello, this is Cats Go app!")
 	})
 
-	var ctx = context.TODO()
-	var rps repo.Repository
-	var rpsAuth repo.Auth
+	var (
+		ctx     = context.TODO()
+		rps     repo.Repository
+		rpsAuth repo.Auth
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
 	if flag == "postgres" {
 		// postgres connect
 		conn, err := NewPgxPool(ctx, cfg)
@@ -137,7 +144,14 @@ func main() {
 		rpsAuth = repo.NewMongoRepository(client, cfg)
 	}
 
-	var srv service.Service = service.NewCatService(rps)
+	// redis connect
+	rdb, err := NewRedisClient(cfg)
+	if err != nil {
+		log.Panic(err)
+	}
+	rds := repo.NewRedisRepository(rdb)
+
+	var srv service.Service = service.NewCatService(rps, *rds) //hash
 	hndlr := handler.NewCatHandler(srv)
 
 	e.GET("/cats", hndlr.GetAllCats)
