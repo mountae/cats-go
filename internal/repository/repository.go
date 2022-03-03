@@ -16,12 +16,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// PostgresRepository init pgsql
+// PostgresRepository provides a connection with pgsql
 type PostgresRepository struct {
 	conn *pgxpool.Pool
 }
 
-// MongoRepository init mongodb
+// MongoRepository provides a connection with mongodb
 type MongoRepository struct {
 	client *mongo.Client
 	cfg    *configs.Config

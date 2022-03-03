@@ -115,7 +115,6 @@ func main() {
 	})
 
 	var (
-		ctx     = context.TODO()
 		rps     repo.Repository
 		rpsAuth repo.Auth
 	)
@@ -151,7 +150,7 @@ func main() {
 	}
 	rds := repo.NewRedisRepository(rdb)
 
-	var srv service.Service = service.NewCatService(rps, *rds) //hash
+	var srv service.Service = service.NewCatService(rps, *rds)
 	hndlr := handler.NewCatHandler(srv)
 
 	e.GET("/cats", hndlr.GetAllCats)

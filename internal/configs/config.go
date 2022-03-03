@@ -9,7 +9,6 @@ type Config struct {
 	PgPort     string `env:"POSTGRES_PORT" envDefault:"5432"`
 	PgDBName   string `env:"POSTGRES_DATABASE" envDefault:"postgres"`
 
-	Mongo           string `env:"MONGO_CONNSTRING" envDefault:"mongodb://userm:testpassw@localhost:27017/"`
 	MongoUser       string `env:"MONGO_USERNAME" envDefault:"userm"`
 	MongoPassword   string `env:"MONGO_PASSWORD" envDefault:"testpassw"`
 	MongoHost       string `env:"MONGO_HOST" envDefault:"localhost"`

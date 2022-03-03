@@ -6,15 +6,18 @@ services:
       - pg
       - mongo
       - redis
-    build: ./
+    build: .
     command: ./cats-go-docker
     ports:
       - "8000:8000"
-    networks:
-      - mynet
     environment:
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=root
-      - MONGODB_CONNSTRING=mongodb://userm:testpassw@localhost:27017/
+      - POSTGRES_HOST=postrgres
+      - MONGO_USER=userm
+      - MONGO_PASSWORD=testpassw
+      - MONGO_HOST=mongo
+      - REDIS_HOST=redis
 
   pg:
     container_name: postgres
@@ -22,46 +25,37 @@ services:
     restart: always
     ports:
       - "5432:5432"
-    networks:
-      - mynet
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=root
 
   flyway:
     image: flyway/flyway
     command: -url=jdbc:postgresql://postgres:5432/postgres -user=postgres -password=root migrate
     volumes:
-      - roach:/var/lib/postgresql/data
+      - flyway-data:/var/lib/postgresql/data
       - ./flyway/sql:/flyway/sql
     depends_on:
       - pg
-    networks:
-      - mynet
 
   mongo:
     image: mongo
+    hostname: mongo
     restart: always
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: userm
       MONGO_INITDB_ROOT_PASSWORD: testpassw
-    networks:
-      - mynet
     volumes:
-      - roach:/data/db
+      - mongo-data:/data/db
 
   redis:
     image: redis
+    hostname: redis
     ports:
       - "6379:6379"
-    networks:
-      - mynet
+    volumes:
+      - redis-data:/data
 
 volumes:
-  roach:
-
-networks:
-  mynet:
-    driver: bridge
+  flyway-data:
+  mongo-data:
+  redis-data:
